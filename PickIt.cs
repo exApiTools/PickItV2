@@ -48,6 +48,7 @@ namespace PickIt
         private WaitTime tryToPick = new WaitTime(7);
         public string UniqueRuleFile;
         private WaitTime waitPlayerMove = new WaitTime(10);
+        private List<string> _customItems = new List<string>();
 
         public PickIt()
         {
@@ -71,7 +72,19 @@ namespace PickIt
             _workCoroutine = new WaitTime(Settings.ExtraDelay);
             Settings.ExtraDelay.OnValueChanged += (sender, i) => _workCoroutine = new WaitTime(i);
             LoadRuleFiles();
+            LoadCustomItems();
             return true;
+        }
+
+        private void LoadCustomItems()
+        {
+            _customItems.Add("Treasure Key");
+            _customItems.Add("Silver Key");
+            _customItems.Add("Golden Key");
+            _customItems.Add("Flashpowder Keg");
+            _customItems.Add("Divine Life Flask");
+            _customItems.Add("Quicksilver Flask");
+            _customItems.Add("Stone of Passage");
         }
 
         private IEnumerator MainWorkCoroutine()
@@ -343,6 +356,17 @@ namespace PickIt
 
                 if (Settings.AllUniques && item.Rarity == ItemRarity.Unique) return true;
 
+                #endregion
+
+                #region Custom Rules
+                if (_customItems.Contains(item.BaseName))
+                    return true;
+                if (item.Quality >= 1 && item.ClassName.Contains("Flask"))
+                    return true;
+                if (item.BaseName.Contains("Watchstone"))
+                    return true;
+                if (item.BaseName.Contains("Incubator"))
+                    return true;
                 #endregion
             }
             catch (Exception e)
