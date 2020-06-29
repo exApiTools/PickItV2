@@ -32,6 +32,10 @@ namespace PickIt
             GroundChests = new ToggleNode(false);
             ShaperItems = new ToggleNode(true);
             ElderItems = new ToggleNode(true);
+            HunterItems = new ToggleNode(true);
+            RedeemerItems = new ToggleNode(true);
+            CrusaderItems = new ToggleNode(true);
+            WarlordItems = new ToggleNode(true);
             FracturedItems = new ToggleNode(true);
             Rares = new ToggleNode(true);
             RareJewels = new ToggleNode(true);
@@ -73,6 +77,10 @@ namespace PickIt
         public RangeNode<int> ExtraDelay { get; set; }
         public ToggleNode ShaperItems { get; set; }
         public ToggleNode ElderItems { get; set; }
+        public ToggleNode HunterItems { get; set; }
+        public ToggleNode CrusaderItems { get; set; }
+        public ToggleNode WarlordItems { get; set; }
+        public ToggleNode RedeemerItems { get; set; }
         public ToggleNode FracturedItems { get; set; }
         public ToggleNode Rares { get; set; }
         public ToggleNode RareJewels { get; set; }
