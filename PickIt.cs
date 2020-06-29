@@ -293,6 +293,34 @@ namespace PickIt
 
                 #endregion
 
+                #region Influenced
+
+                if (Settings.HunterItems)
+                {
+                    if (item.IsHunter)
+                        return true;
+                }
+
+                if (Settings.RedeemerItems)
+                {
+                    if (item.IsRedeemer)
+                        return true;
+                }
+
+                if (Settings.CrusaderItems)
+                {
+                    if (item.IsCrusader)
+                        return true;
+                }
+
+                if (Settings.WarlordItems)
+                {
+                    if (item.IsWarlord)
+                        return true;
+                }
+
+                #endregion
+
                 #region Rare Overrides
 
                 if (Settings.Rares && item.Rarity == ItemRarity.Rare)
@@ -443,14 +471,14 @@ namespace PickIt
 
             #endregion
 
-            #region Metamorph edit
+            #region Metamorph
 
             if (itemEntity.IsMetaItem)
             {
                 pickItemUp = true;
             }
 
-            #endregion 
+            #endregion
 
             return pickItemUp;
         }
