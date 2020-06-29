@@ -367,6 +367,12 @@ namespace PickIt
                     return true;
                 if (item.BaseName.Contains("Incubator"))
                     return true;
+                if (item.BaseName.Contains(" Seed"))
+                    return true;
+                if (item.BaseName.Contains(" Grain"))
+                    return true;
+                if (item.BaseName.Contains(" Bulb"))
+                    return true;
                 #endregion
             }
             catch (Exception e)
