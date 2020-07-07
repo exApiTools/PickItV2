@@ -5,6 +5,8 @@ using ExileCore.PoEMemory.MemoryObjects;
 using ExileCore.Shared;
 using ExileCore.Shared.Enums;
 using ExileCore.Shared.Helpers;
+using ImGuiNET;
+using Random_Features.Libs;
 using SharpDX;
 using System;
 using System.Collections;
@@ -25,7 +27,9 @@ namespace PickIt
         private readonly Stopwatch _pickUpTimer = Stopwatch.StartNew();
         private readonly Stopwatch DebugTimer = Stopwatch.StartNew();
         private readonly WaitTime toPick = new WaitTime(1);
-        private readonly WaitTime wait3ms = new WaitTime(1);
+        private readonly WaitTime wait1ms = new WaitTime(1);
+        private readonly WaitTime wait2ms = new WaitTime(2);
+        private readonly WaitTime wait3ms = new WaitTime(3);
         private readonly WaitTime waitForNextTry = new WaitTime(1);
         private Vector2 _clickWindowOffset;
         private HashSet<string> _magicRules;
@@ -99,11 +103,11 @@ namespace PickIt
             }
         }
 
-        /*public override void DrawSettings()
+        public override void DrawSettings()
         {
             ImGui.BulletText($"v{PluginVersion}");
             ImGui.BulletText($"Last Updated: {buildDate}");
-            Settings.PickUpKey = ImGuiExtension.HotkeySelector("Pickup Key", Settings.PickUpKey);
+            Settings.PickUpKey = ImGuiExtension.HotkeySelector("Pickup Key: " + Settings.PickUpKey.Value.ToString(), Settings.PickUpKey);
             Settings.LeftClickToggleNode.Value = ImGuiExtension.Checkbox("Mouse Button: " + (Settings.LeftClickToggleNode ? "Left" : "Right"), Settings.LeftClickToggleNode);
             Settings.LeftClickToggleNode.Value = ImGuiExtension.Checkbox("Return Mouse To Position Before Click", Settings.ReturnMouseToBeforeClickPosition);
             Settings.GroundChests.Value = ImGuiExtension.Checkbox("Click Chests If No Items Around", Settings.GroundChests);
@@ -116,7 +120,7 @@ namespace PickIt
             //ImGuiExtension.ToolTip("Override item.CanPickup\n\rDO NOT enable this unless you know what you're doing!");
             
             var tempRef = false;
-            if (ImGui.CollapsingHeader("Pickit Rules", TreeNodeFlags.Framed | TreeNodeFlags.DefaultOpen))
+            if (ImGui.CollapsingHeader("Pickit Rules", ImGuiTreeNodeFlags.Framed | ImGuiTreeNodeFlags.DefaultOpen))
             {
                 if (ImGui.Button("Reload All Files")) LoadRuleFiles();
                 Settings.NormalRuleFile = ImGuiExtension.ComboBox("Normal Rules", Settings.NormalRuleFile, PickitFiles, out tempRef);
@@ -127,13 +131,24 @@ namespace PickIt
                 if (tempRef) _rareRules = LoadPickit(Settings.RareRuleFile);
                 Settings.UniqueRuleFile = ImGuiExtension.ComboBox("Unique Rules", Settings.UniqueRuleFile, PickitFiles, out tempRef);
                 if (tempRef) _uniqueRules = LoadPickit(Settings.UniqueRuleFile);
+                Settings.WeightRuleFile = ImGuiExtension.ComboBox("Weight Rules", Settings.WeightRuleFile, PickitFiles, out tempRef);
+                if (tempRef) _weightsRules = LoadWeights(Settings.WeightRuleFile);
             }
 
-            if (ImGui.CollapsingHeader("Item Logic", TreeNodeFlags.Framed | TreeNodeFlags.DefaultOpen))
+            if (ImGui.CollapsingHeader("Item Logic", ImGuiTreeNodeFlags.Framed | ImGuiTreeNodeFlags.DefaultOpen))
             {
-                Settings.ShaperItems.Value = ImGuiExtension.Checkbox("Pickup Shaper Items", Settings.ShaperItems);
-                ImGui.SameLine();
-                Settings.ElderItems.Value = ImGuiExtension.Checkbox("Pickup Elder Items", Settings.ElderItems);
+                if (ImGui.TreeNode("Influence Types"))
+                {
+                    Settings.ShaperItems.Value = ImGuiExtension.Checkbox("Shaper Items", Settings.ShaperItems);
+                    Settings.ElderItems.Value = ImGuiExtension.Checkbox("Elder Items", Settings.ElderItems);
+                    Settings.HunterItems.Value = ImGuiExtension.Checkbox("Hunter Items", Settings.HunterItems);
+                    Settings.CrusaderItems.Value = ImGuiExtension.Checkbox("Crusader Items", Settings.CrusaderItems);
+                    Settings.WarlordItems.Value = ImGuiExtension.Checkbox("Warlord Items", Settings.WarlordItems);
+                    Settings.RedeemerItems.Value = ImGuiExtension.Checkbox("Redeemer Items", Settings.RedeemerItems);
+                    Settings.FracturedItems.Value = ImGuiExtension.Checkbox("Fractured Items", Settings.FracturedItems);
+                    ImGui.Spacing();
+                    ImGui.TreePop();
+                }
                 if (ImGui.TreeNode("Links/Sockets/RGB"))
                 {
                     Settings.RGB.Value = ImGuiExtension.Checkbox("RGB Items", Settings.RGB);
@@ -149,6 +164,8 @@ namespace PickIt
 
                 if (ImGui.TreeNode("Overrides"))
                 {
+                    Settings.UseWeight.Value = ImGuiExtension.Checkbox("Use Weight", Settings.UseWeight);
+                    Settings.IgnoreScrollOfWisdom.Value = ImGuiExtension.Checkbox("Ignore Scroll Of Wisdom", Settings.IgnoreScrollOfWisdom);
                     Settings.PickUpEverything.Value = ImGuiExtension.Checkbox("Pickup Everything", Settings.PickUpEverything);
                     Settings.AllDivs.Value = ImGuiExtension.Checkbox("All Divination Cards", Settings.AllDivs);
                     Settings.AllCurrency.Value = ImGuiExtension.Checkbox("All Currency", Settings.AllCurrency);
@@ -211,7 +228,7 @@ namespace PickIt
                     ImGui.TreePop();
                 }
             }
-        }*/
+        }
 
         public override Job Tick()
         {
@@ -241,12 +258,14 @@ namespace PickIt
                 }
             }
 
-            if (DebugTimer.ElapsedMilliseconds > 2000)
+            if (DebugTimer.ElapsedMilliseconds > 300)
             {
                 FullWork = true;
-                LogMessage("Error pick it stop after time limit 2000 ms", 1);
+                LogMessage("Error pick it stop after time limit 300 ms", 1);
                 DebugTimer.Reset();
             }
+            //Graphics.DrawText($@"PICKIT :: Debug Tick Timer ({DebugTimer.ElapsedMilliseconds}ms)", new Vector2(100, 100), FontAlign.Left);
+            //DebugTimer.Reset();
 
             return null;
         }
@@ -523,8 +542,12 @@ namespace PickIt
             }
 
             GameController.Debug["PickIt"] = currentLabels;
-            var pickUpThisItem = currentLabels.FirstOrDefault(x => DoWePickThis(x) && x.Distance < Settings.PickupRange);
-            if (pickUpThisItem.IsMetaItem ? pickUpThisItem?.WorldIcon != null : pickUpThisItem?.GroundItem != null) yield return TryToPickV2(pickUpThisItem);
+            var rectangleOfGameWindow = GameController.Window.GetWindowRectangleTimeCache;
+            rectangleOfGameWindow.Inflate(-36, -36);
+            var pickUpThisItem = currentLabels.FirstOrDefault(x => DoWePickThis(x) && x.Distance < Settings.PickupRange && x.GroundItem != null && rectangleOfGameWindow.Intersects(new RectangleF(x.LabelOnGround.Label.GetClientRectCache.Center.X, x.LabelOnGround.Label.GetClientRectCache.Center.Y, 3, 3)));
+
+                yield return TryToPickV2(pickUpThisItem);
+
             FullWork = true;
         }
 
@@ -539,16 +562,17 @@ namespace PickIt
 
             var centerOfItemLabel = pickItItem.LabelOnGround.Label.GetClientRectCache.Center;
             var rectangleOfGameWindow = GameController.Window.GetWindowRectangleTimeCache;
+
             var oldMousePosition = Mouse.GetCursorPositionVector();
             _clickWindowOffset = rectangleOfGameWindow.TopLeft;
-            rectangleOfGameWindow.Inflate(-55, -55);
+            rectangleOfGameWindow.Inflate(-36, -36);
             centerOfItemLabel.X += rectangleOfGameWindow.Left;
             centerOfItemLabel.Y += rectangleOfGameWindow.Top;
 
             if (!rectangleOfGameWindow.Intersects(new RectangleF(centerOfItemLabel.X, centerOfItemLabel.Y, 3, 3)))
             {
                 FullWork = true;
-                //LogMessage($"Label outside game window. Label: {centerOfItemLabel} Window: {rectangleOfGameWindow}", 5, Color.Red);
+                LogMessage($"Label outside game window. Label: {centerOfItemLabel} Window: {rectangleOfGameWindow}", 5, Color.Red);
                 yield break;
             }
 
@@ -570,27 +594,32 @@ namespace PickIt
                     yield break;
                 }
 
-                /*while (GameController.Player.GetComponent<Actor>().isMoving)
-                {
-                    yield return waitPlayerMove;
-                }*/
+                //while (GameController.Player.GetComponent<Actor>().isMoving)
+                //{
+                //    yield return waitPlayerMove;
+                //}
                 var clientRect = completeItemLabel.GetClientRect();
 
                 var clientRectCenter = clientRect.Center;
 
                 var vector2 = clientRectCenter + _clickWindowOffset;
 
+                if (!rectangleOfGameWindow.Intersects(new RectangleF(vector2.X, vector2.Y, 3, 3)))
+                {
+                    FullWork = true;
+                    LogMessage($"x,y outside game window. Label: {centerOfItemLabel} Window: {rectangleOfGameWindow}", 5, Color.Red);
+                    yield break;
+                }
+
                 Mouse.MoveCursorToPosition(vector2);
-                yield return wait3ms;
-                Mouse.MoveCursorToPosition(vector2);
-                yield return wait3ms;
-                yield return Mouse.LeftClick();
+                yield return wait2ms;
+
+                //if (pickItItem.IsTargeted())
+                    yield return Mouse.LeftClick();
+
                 yield return toPick;
                 tryCount++;
             }
-
-            if (pickItItem.IsTargeted())
-                Input.Click(MouseButtons.Left);
 
             tryCount = 0;
 
@@ -598,7 +627,7 @@ namespace PickIt
                        x => x.Address == pickItItem.LabelOnGround.Address) != null && tryCount < 6)
             {
                 tryCount++;
-                yield return waitForNextTry;
+                //yield return waitForNextTry;
             }
 
             //yield return waitForNextTry;
@@ -627,7 +656,7 @@ namespace PickIt
             _magicRules = LoadPickit(Settings.MagicRuleFile);
             _rareRules = LoadPickit(Settings.RareRuleFile);
             _uniqueRules = LoadPickit(Settings.UniqueRuleFile);
-            _weightsRules = LoadWeights("Weights");
+            _weightsRules = LoadWeights(Settings.WeightRuleFile);
         }
 
         public HashSet<string> LoadPickit(string fileName)
@@ -680,6 +709,7 @@ namespace PickIt
                 }
             }
 
+            LogMessage($"PICKIT :: (Re)Loaded {fileName}", 5, Color.Cyan);
             return result;
         }
 

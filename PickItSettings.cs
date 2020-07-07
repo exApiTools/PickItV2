@@ -65,6 +65,7 @@ namespace PickIt
             MagicRuleFile = string.Empty;
             RareRuleFile = string.Empty;
             UniqueRuleFile = string.Empty;
+            WeightRuleFile = string.Empty;
             LeftClickToggleNode = new ToggleNode(true);
             OverrideItemPickup = new ToggleNode(false);
             MouseSpeed = new RangeNode<float>(1, 0, 30);
@@ -131,6 +132,7 @@ namespace PickIt
         public string MagicRuleFile { get; set; }
         public string RareRuleFile { get; set; }
         public string UniqueRuleFile { get; set; }
+        public string WeightRuleFile { get; set; }
         public RangeNode<float> MouseSpeed { get; set; }
         public ToggleNode ReturnMouseToBeforeClickPosition { get; set; } = new ToggleNode(true);
         public RangeNode<int> TimeBeforeNewClick { get; set; } = new RangeNode<int>(500, 0, 1500);

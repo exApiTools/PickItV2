@@ -49,18 +49,23 @@
     <CodeAnalysisRuleSet>MinimumRecommendedRules.ruleset</CodeAnalysisRuleSet>
   </PropertyGroup>
   <ItemGroup>
-    <Reference Include="mscorlib" />
-    <Reference Include="SharpDX, Version=4.2.0.0, Culture=neutral, PublicKeyToken=b4dcf0f35e5521f1">
-      <HintPath>..\..\PoeHelper\SharpDX.dll</HintPath>
+    <Reference Include="ImGui.NET">
+      <HintPath>..\..\..\deps\ImGui.NET.dll</HintPath>
       <Private>False</Private>
     </Reference>
-    <Reference Include="SharpDX.Mathematics, Version=4.2.0.0, Culture=neutral, PublicKeyToken=b4dcf0f35e5521f1">
-      <HintPath>..\..\PoeHelper\SharpDX.Mathematics.dll</HintPath>
+    <Reference Include="mscorlib" />
+    <Reference Include="SharpDX, Version=4.2.0.0, Culture=neutral, PublicKeyToken=b4dcf0f35e5521f1, processorArchitecture=MSIL">
+      <HintPath>..\..\..\packages\SharpDX.4.2.0\lib\net45\SharpDX.dll</HintPath>
+      <Private>False</Private>
+    </Reference>
+    <Reference Include="SharpDX.Mathematics, Version=4.2.0.0, Culture=neutral, PublicKeyToken=b4dcf0f35e5521f1, processorArchitecture=MSIL">
+      <HintPath>..\..\..\packages\SharpDX.Mathematics.4.2.0\lib\net45\SharpDX.Mathematics.dll</HintPath>
       <Private>False</Private>
     </Reference>
     <Reference Include="System" />
     <Reference Include="System.Core" />
     <Reference Include="System.Drawing" />
+    <Reference Include="System.Numerics" />
     <Reference Include="System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089">
       <HintPath>C:\Windows\Microsoft.NET\Framework64\v4.0.30319\System.Windows.Forms.dll</HintPath>
       <Private>False</Private>
@@ -74,6 +79,7 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="CustomItem.cs" />
+    <Compile Include="ImGuiExtension.cs" />
     <Compile Include="Misc.cs" />
     <Compile Include="Mouse.cs" />
     <Compile Include="PickIt.cs" />
