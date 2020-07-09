@@ -52,9 +52,8 @@
     <Reference Include="ExileCore">
       <HintPath>..\..\..\..\PoeHelper\ExileCore.dll</HintPath>
     </Reference>
-    <Reference Include="ImGui.NET, Version=1.71.0.0, Culture=neutral, processorArchitecture=MSIL">
-      <SpecificVersion>False</SpecificVersion>
-      <HintPath>..\..\..\..\ImGui.NET.dll</HintPath>
+    <Reference Include="ImGui.NET">
+      <HintPath>..\..\..\..\PoEHelper\ImGui.NET.dll</HintPath>
     </Reference>
     <Reference Include="mscorlib" />
     <Reference Include="SharpDX, Version=4.2.0.0, Culture=neutral, PublicKeyToken=b4dcf0f35e5521f1">
