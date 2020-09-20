@@ -225,6 +225,8 @@ namespace PickIt
                     Settings.ItemCells.Value = ImGuiExtension.IntSlider("Maximum Cells##RareWeaponCell", Settings.ItemCells);
                     ImGui.TreePop();
                 }
+
+                Settings.HeistItems.Value = ImGuiExtension.Checkbox("Heist Items", Settings.HeistItems);
             }
         }
 
@@ -263,7 +265,7 @@ namespace PickIt
             if (DebugTimer.ElapsedMilliseconds > 300)
             {
                 FullWork = true;
-                LogMessage("Error pick it stop after time limit 300 ms", 1);
+                //LogMessage("Error pick it stop after time limit 300 ms", 1);
                 DebugTimer.Reset();
             }
             //Graphics.DrawText($@"PICKIT :: Debug Tick Timer ({DebugTimer.ElapsedMilliseconds}ms)", new Vector2(100, 100), FontAlign.Left);
@@ -274,7 +276,10 @@ namespace PickIt
 
         public bool InCustomList(HashSet<string> checkList, CustomItem itemEntity, ItemRarity rarity)
         {
-            if (checkList.Contains(itemEntity.BaseName) && itemEntity.Rarity == rarity) return true;
+            if (checkList.Contains(itemEntity.BaseName) && itemEntity.Rarity == rarity)
+                return true;
+            if (checkList.Contains(itemEntity.ClassName) && itemEntity.Rarity == rarity)
+                return true;
             return false;
         }
 
@@ -313,6 +318,13 @@ namespace PickIt
                 }
 
                 #endregion
+
+
+                if (Settings.HeistItems)
+                {
+                    if (item.IsHeist)
+                        return true;
+                }
 
                 #region Influenced
 
@@ -583,7 +595,7 @@ namespace PickIt
             if (dx * dx + dy * dy > 275 * 275) return false;
 
             if (item.IsElder || item.IsFractured || item.IsShaper ||
-                item.IsHunter || item.IsCrusader || item.IsRedeemer || item.IsWarlord)
+                item.IsHunter || item.IsCrusader || item.IsRedeemer || item.IsWarlord || item.IsHeist)
                 return true;
             
             if (item.Rarity == ItemRarity.Rare && item.Width * item.Height > 1) return false;
@@ -596,7 +608,7 @@ namespace PickIt
             if (!pickItItem.IsValid)
             {
                 FullWork = true;
-                LogMessage("PickItem is not valid.", 5, Color.Red);
+                //LogMessage("PickItem is not valid.", 5, Color.Red);
                 yield break;
             }
 
@@ -611,7 +623,7 @@ namespace PickIt
             if (!rectangleOfGameWindow.Intersects(new RectangleF(centerOfItemLabel.X, centerOfItemLabel.Y, 3, 3)))
             {
                 FullWork = true;
-                LogMessage($"Label outside game window. Label: {centerOfItemLabel} Window: {rectangleOfGameWindow}", 5, Color.Red);
+                //LogMessage($"Label outside game window. Label: {centerOfItemLabel} Window: {rectangleOfGameWindow}", 5, Color.Red);
                 yield break;
             }
 
@@ -625,11 +637,11 @@ namespace PickIt
                 {
                     if (tryCount > 0)
                     {
-                        LogMessage("Probably item already picked.", 3);
+                        //LogMessage("Probably item already picked.", 3);
                         yield break;
                     }
 
-                    LogError("Label for item not found.", 5);
+                    //LogError("Label for item not found.", 5);
                     yield break;
                 }
 
@@ -646,7 +658,7 @@ namespace PickIt
                 if (!rectangleOfGameWindow.Intersects(new RectangleF(vector2.X, vector2.Y, 3, 3)))
                 {
                     FullWork = true;
-                    LogMessage($"x,y outside game window. Label: {centerOfItemLabel} Window: {rectangleOfGameWindow}", 5, Color.Red);
+                    //LogMessage($"x,y outside game window. Label: {centerOfItemLabel} Window: {rectangleOfGameWindow}", 5, Color.Red);
                     yield break;
                 }
 
