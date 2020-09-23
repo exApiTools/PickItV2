@@ -40,28 +40,19 @@ namespace PickIt
         private WaitTime _workCoroutine;
         public DateTime buildDate;
         private uint coroutineCounter;
-        // private Vector2 cursorBeforePickIt;
+        private Vector2 cursorBeforePickIt;
         private bool CustomRulesExists = true;
         private bool FullWork = true;
-        // private Element LastLabelClick;
+        private Element LastLabelClick;
         public string MagicRuleFile;
-        private readonly WaitTime mainWorkCoroutine = new WaitTime(5);
+        private WaitTime mainWorkCoroutine = new WaitTime(5);
         public string NormalRuleFile;
         private Coroutine pickItCoroutine;
         public string RareRuleFile;
-        private readonly WaitTime tryToPick = new WaitTime(7);
+        private WaitTime tryToPick = new WaitTime(7);
         public string UniqueRuleFile;
-        private readonly WaitTime waitPlayerMove = new WaitTime(10);
-
-        private readonly List<string> _customItems = new List<string>() {
-            "Treasure Key",
-            "Silver Key",
-            "Golden Key",
-            "Flashpowder Keg",
-            "Divine Life Flask",
-            "Quicksilver Flask",
-            "Stone of Passage"
-            };
+        private WaitTime waitPlayerMove = new WaitTime(10);
+        private List<string> _customItems = new List<string>();
 
         public PickIt()
         {
@@ -85,7 +76,20 @@ namespace PickIt
             _workCoroutine = new WaitTime(Settings.ExtraDelay);
             Settings.ExtraDelay.OnValueChanged += (sender, i) => _workCoroutine = new WaitTime(i);
             LoadRuleFiles();
+            LoadCustomItems();
             return true;
+        }
+
+        // bad idea to add hard coded pickups.
+        private void LoadCustomItems()
+        {
+            _customItems.Add("Treasure Key");
+            _customItems.Add("Silver Key");
+            _customItems.Add("Golden Key");
+            _customItems.Add("Flashpowder Keg");
+            _customItems.Add("Divine Life Flask");
+            _customItems.Add("Quicksilver Flask");
+            _customItems.Add("Stone of Passage");
         }
 
         private IEnumerator MainWorkCoroutine()
@@ -117,11 +121,12 @@ namespace PickIt
             //ImGuiExtension.ToolTip("Override item.CanPickup\n\rDO NOT enable this unless you know what you're doing!");
             Settings.LazyLooting.Value = ImGuiExtension.Checkbox("Use Lazy Looting", Settings.LazyLooting);
             Settings.LazyLootingPauseKey.Value = ImGuiExtension.HotkeySelector("Pause lazy looting for 2 sec: " + Settings.LazyLootingPauseKey.Value, Settings.LazyLootingPauseKey);
+            
+            var tempRef = false;
             if (ImGui.CollapsingHeader("Pickit Rules", ImGuiTreeNodeFlags.Framed | ImGuiTreeNodeFlags.DefaultOpen))
             {
                 if (ImGui.Button("Reload All Files")) LoadRuleFiles();
-
-                Settings.NormalRuleFile = ImGuiExtension.ComboBox("Normal Rules", Settings.NormalRuleFile, PickitFiles, out bool tempRef);
+                Settings.NormalRuleFile = ImGuiExtension.ComboBox("Normal Rules", Settings.NormalRuleFile, PickitFiles, out tempRef);
                 if (tempRef) _normalRules = LoadPickit(Settings.NormalRuleFile);
                 Settings.MagicRuleFile = ImGuiExtension.ComboBox("Magic Rules", Settings.MagicRuleFile, PickitFiles, out tempRef);
                 if (tempRef) _magicRules = LoadPickit(Settings.MagicRuleFile);
@@ -183,6 +188,10 @@ namespace PickIt
                     Settings.GemQuality.Value = ImGuiExtension.IntSlider("##Gems", "Lowest Quality", Settings.GemQuality);
                     ImGui.SameLine();
                     Settings.Gems.Value = ImGuiExtension.Checkbox("Gems", Settings.Gems);
+
+                    Settings.FlasksQuality.Value = ImGuiExtension.IntSlider("##Flasks", "Lowest Quality", Settings.FlasksQuality);
+                    ImGui.SameLine();
+                    Settings.Flasks.Value = ImGuiExtension.Checkbox("Flasks", Settings.Flasks);
                     ImGui.Separator();
                     ImGui.TreePop();
                 }
@@ -407,9 +416,10 @@ namespace PickIt
 
                 #endregion
 
-                #region Skill Gems
+                #region Qualiity Rules
 
                 if (Settings.Gems && item.Quality >= Settings.GemQuality.Value && item.ClassName.Contains("Skill Gem")) return true;
+                if (Settings.Flasks && item.Quality >= Settings.FlasksQuality.Value && item.ClassName.Contains("Flask")) return true;
 
                 #endregion
 
@@ -420,10 +430,6 @@ namespace PickIt
                 #endregion
 
                 #region Custom Rules
-                if (_customItems.Contains(item.BaseName))
-                    return true;
-                if (item.Quality >= 1 && item.ClassName.Contains("Flask"))
-                    return true;
                 if (item.BaseName.Contains("Watchstone"))
                     return true;
                 if (item.BaseName.Contains("Incubator"))
@@ -754,7 +760,7 @@ namespace PickIt
                     var s = x.Split('=');
                     if (s.Length == 2) result[s[0].Trim()] = int.Parse(s[1]);
                 }
-                catch (Exception)
+                catch (Exception e)
                 {
                     DebugWindow.LogError($"{nameof(PickIt)} => Error when parse weight.");
                 }
