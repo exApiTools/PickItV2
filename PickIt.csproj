@@ -50,11 +50,19 @@
     <CodeAnalysisRuleSet>MinimumRecommendedRules.ruleset</CodeAnalysisRuleSet>
   </PropertyGroup>
   <ItemGroup>
+    <Reference Include="ExileCore">
+      <HintPath>..\..\..\..\PoeHelper\ExileCore.dll</HintPath>
+      <Private>False</Private>
+    </Reference>
     <Reference Include="ImGui.NET">
       <HintPath>..\..\..\deps\ImGui.NET.dll</HintPath>
       <Private>False</Private>
     </Reference>
     <Reference Include="mscorlib" />
+    <Reference Include="Newtonsoft.Json, Version=12.0.0.0, Culture=neutral, PublicKeyToken=30ad4fe6b2a6aeed, processorArchitecture=MSIL">
+      <HintPath>..\..\..\packages\Newtonsoft.Json.12.0.3\lib\net45\Newtonsoft.Json.dll</HintPath>
+      <Private>False</Private>
+    </Reference>
     <Reference Include="SharpDX, Version=4.2.0.0, Culture=neutral, PublicKeyToken=b4dcf0f35e5521f1, processorArchitecture=MSIL">
       <HintPath>..\..\..\packages\SharpDX.4.2.0\lib\net45\SharpDX.dll</HintPath>
       <Private>False</Private>
@@ -80,6 +88,7 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="CustomItem.cs" />
+    <Compile Include="FullRareSetManager.cs" />
     <Compile Include="ImGuiExtension.cs" />
     <Compile Include="Misc.cs" />
     <Compile Include="Mouse.cs" />
@@ -94,13 +103,6 @@
     <Content Include="ignored_currency.txt">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>
-  </ItemGroup>
-  <ItemGroup>
-    <ProjectReference Include="..\..\..\Core\Core.csproj">
-      <Project>{5539d732-34a7-44ab-9e28-116c3429b12a}</Project>
-      <Name>Core</Name>
-      <Private>False</Private>
-    </ProjectReference>
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
 </Project>
