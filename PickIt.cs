@@ -378,7 +378,7 @@ namespace PickIt
                 if (Settings.Rares && item.Rarity == ItemRarity.Rare)
                 {
 
-                    if (Settings.FullRareSetManagerOverride.Value && item.ItemLevel >= 60 && item.ItemLevel <= 74)
+                    if (Settings.FullRareSetManagerOverride.Value && item.ItemLevel >= 60)
                     {
                         var setData = FullRareSetManagerData;
                         var maxSetWanted = setData.WantedSets;
@@ -397,8 +397,8 @@ namespace PickIt
                                 if (item.Width <= Settings.RareWeaponWidth && item.Height <= Settings.RareWeaponHeight) return true;
 
                     }
-                    else  
-                    {
+                    // else  
+                    // {
                         if (Settings.RareRings && item.ClassName == "Ring" && item.ItemLevel >= Settings.RareRingsilvl) return true;
                         if (Settings.RareAmulets && item.ClassName == "Amulet" && item.ItemLevel >= Settings.RareAmuletsilvl) return true;
                         if (Settings.RareBelts && item.ClassName == "Belt" && item.ItemLevel >= Settings.RareBeltsilvl) return true;
@@ -409,7 +409,7 @@ namespace PickIt
 
                         if (Settings.RareWeapon && item.IsWeapon && item.ItemLevel >= Settings.RareWeaponilvl)
                             if (item.Width <= Settings.RareWeaponWidth && item.Height <= Settings.RareWeaponHeight) return true;
-                    }
+                    // }
 
                     if (Settings.RareShield && item.ClassName == "Shield" && item.ItemLevel >= Settings.RareShieldilvl)
                         if (item.Width <= Settings.RareShieldWidth && item.Height <= Settings.RareShieldHeight)
