@@ -512,7 +512,6 @@ namespace PickIt
         {
             if (!Input.GetKeyState(Settings.PickUpKey.Value) || !GameController.Window.IsForeground()) yield break;
             var window = GameController.Window.GetWindowRectangleTimeCache;
-            var rect = new RectangleF(window.X, window.X, window.X + window.Width, window.Y + window.Height);
             var playerPos = GameController.Player.GridPos;
 
             List<CustomItem> currentLabels;
@@ -522,8 +521,8 @@ namespace PickIt
             {
                 currentLabels = GameController.Game.IngameState.IngameUi.ItemsOnGroundLabels
                     .Where(x => x.Address != 0 &&
-                                x.ItemOnGround?.Path != null &&
-                                x.IsVisible && x.Label.GetClientRectCache.Center.PointInRectangle(rect) &&
+                                x.ItemOnGround?.Path != null && x.ItemOnGround.HasComponent<WorldItem>() &&
+                                x.IsVisible && x.Label.GetClientRectCache.Center.PointInRectangle(window) &&
                                 (x.CanPickUp || x.MaxTimeForPickUp.TotalSeconds <= 0) || x.ItemOnGround?.Path == morphPath)
                     .Select(x => new CustomItem(x, GameController.Files,
                         x.ItemOnGround.DistancePlayer, _weightsRules, x.ItemOnGround?.Path == morphPath))
@@ -533,8 +532,8 @@ namespace PickIt
             {
                 currentLabels = GameController.Game.IngameState.IngameUi.ItemsOnGroundLabels
                     .Where(x => x.Address != 0 &&
-                                x.ItemOnGround?.Path != null &&
-                                x.IsVisible && x.Label.GetClientRectCache.Center.PointInRectangle(rect) &&
+                                x.ItemOnGround?.Path != null && x.ItemOnGround.HasComponent<WorldItem>() &&
+                                x.IsVisible && x.Label.GetClientRectCache.Center.PointInRectangle(window) &&
                                 (x.CanPickUp || x.MaxTimeForPickUp.TotalSeconds <= 0) || x.ItemOnGround?.Path == morphPath)
                     .Select(x => new CustomItem(x, GameController.Files,
                         x.ItemOnGround.DistancePlayer, _weightsRules, x.ItemOnGround?.Path == morphPath))
@@ -544,9 +543,9 @@ namespace PickIt
             GameController.Debug["PickIt"] = currentLabels;
             var rectangleOfGameWindow = GameController.Window.GetWindowRectangleTimeCache;
             rectangleOfGameWindow.Inflate(-36, -36);
-            var pickUpThisItem = currentLabels.FirstOrDefault(x => DoWePickThis(x) && x.Distance < Settings.PickupRange && x.GroundItem != null && rectangleOfGameWindow.Intersects(new RectangleF(x.LabelOnGround.Label.GetClientRectCache.Center.X, x.LabelOnGround.Label.GetClientRectCache.Center.Y, 3, 3)));
+            var pickUpThisItem = currentLabels.FirstOrDefault(x => DoWePickThis(x) && x.Distance < Settings.PickupRange && x.GroundItem != null && rectangleOfGameWindow.Intersects(new RectangleF(window.X + x.LabelOnGround.Label.GetClientRectCache.Center.X, x.LabelOnGround.Label.GetClientRectCache.Center.Y, 3, 3)));
 
-                yield return TryToPickV2(pickUpThisItem);
+            yield return TryToPickV2(pickUpThisItem);
 
             FullWork = true;
         }
