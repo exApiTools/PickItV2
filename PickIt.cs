@@ -260,6 +260,12 @@ namespace PickIt
                         Settings.FullRareSetManagerPickupOverrides.Belts = ImGuiExtension.IntSlider("Max Belts##FRSMOverrides6", Settings.FullRareSetManagerPickupOverrides.Belts, -1, 100);
                         Settings.FullRareSetManagerPickupOverrides.Amulets = ImGuiExtension.IntSlider("Max Amulets##FRSMOverrides7", Settings.FullRareSetManagerPickupOverrides.Amulets, -1, 100);
                         Settings.FullRareSetManagerPickupOverrides.Rings = ImGuiExtension.IntSlider("Max Ring Sets##FRSMOverrides8", Settings.FullRareSetManagerPickupOverrides.Rings, -1, 100);
+                        ImGui.Spacing();
+                        ImGui.Spacing();
+                        ImGui.BulletText("Set the ilvl Min/Max you wish to pickup for Full Rare Set Manager overrides\nIt is up to you how to use these two features\nit does not change how FullRareSetManager counts its sets.\nDefault: -1\n-1 will disable these overrides");
+                        ImGui.Spacing();
+                        Settings.FullRareSetManagerPickupOverrides.MinItemLevel = ImGuiExtension.IntSlider("Minimum Item Level##FRSMOverrides9", Settings.FullRareSetManagerPickupOverrides.MinItemLevel, -1, 100);
+                        Settings.FullRareSetManagerPickupOverrides.MaxItemLevel = ImGuiExtension.IntSlider("Max Item Level##FRSMOverrides10", Settings.FullRareSetManagerPickupOverrides.MaxItemLevel, -1, 100);
                         ImGui.TreePop();
                     }
                     ImGui.TreePop();
@@ -402,12 +408,14 @@ namespace PickIt
 
                 if (Settings.Rares && item.Rarity == ItemRarity.Rare)
                 {
+                    var setData = FullRareSetManagerData;
+                    var maxSetWanted = setData.WantedSets;
+                    var maxPickupOverides = Settings.FullRareSetManagerPickupOverrides;
 
-                    if (Settings.FullRareSetManagerOverride.Value && item.ItemLevel >= 60)
-                    {
-                        var setData = FullRareSetManagerData;
-                        var maxSetWanted = setData.WantedSets;
-                        var maxPickupOverides = Settings.FullRareSetManagerPickupOverrides;
+                    if (Settings.FullRareSetManagerOverride.Value &&
+                        maxPickupOverides.MinItemLevel > -1 ? item.ItemLevel >= maxPickupOverides.MinItemLevel : item.ItemLevel >= 60 &&
+                        maxPickupOverides.MaxItemLevel > -1 ? item.ItemLevel <= maxPickupOverides.MaxItemLevel : item.ItemLevel <= 74)
+                    { 
 
                         if (item.IsIdentified && !Settings.FullRareSetManagerOverrideAllowIdentifiedItems.Value)
                             return false;
@@ -423,8 +431,8 @@ namespace PickIt
                             if (item.Width <= Settings.RareWeaponWidth && item.Height <= Settings.RareWeaponHeight) return true;
 
                     }
-                    // else  
-                    // {
+                    else  
+                    {
                         if (Settings.RareRings && item.ClassName == "Ring" && item.ItemLevel >= Settings.RareRingsilvl) return true;
                         if (Settings.RareAmulets && item.ClassName == "Amulet" && item.ItemLevel >= Settings.RareAmuletsilvl) return true;
                         if (Settings.RareBelts && item.ClassName == "Belt" && item.ItemLevel >= Settings.RareBeltsilvl) return true;
@@ -435,7 +443,7 @@ namespace PickIt
 
                         if (Settings.RareWeapon && item.IsWeapon && item.ItemLevel >= Settings.RareWeaponilvl)
                             if (item.Width <= Settings.RareWeaponWidth && item.Height <= Settings.RareWeaponHeight) return true;
-                    // }
+                    }
 
                     if (Settings.RareShield && item.ClassName == "Shield" && item.ItemLevel >= Settings.RareShieldilvl)
                         if (item.Width <= Settings.RareShieldWidth && item.Height <= Settings.RareShieldHeight)
