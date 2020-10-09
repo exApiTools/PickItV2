@@ -18,6 +18,8 @@ namespace PickIt
             Links = new ToggleNode(true);
             LargestLink = new RangeNode<int>(6, 1, 6);
             RGB = new ToggleNode(true);
+            RGBWidth = new RangeNode<int>(2, 1, 2);
+            RGBHeight = new RangeNode<int>(4, 1, 4);
             AllDivs = new ToggleNode(true);
             AllCurrency = new ToggleNode(true);
             IgnoreScrollOfWisdom = new ToggleNode(true);
@@ -29,14 +31,18 @@ namespace PickIt
             QuestItems = new ToggleNode(true);
             Gems = new ToggleNode(true);
             GemQuality = new RangeNode<int>(1, 0, 20);
+            Flasks = new ToggleNode(true);
+            FlasksQuality = new RangeNode<int>(1, 0, 20);
             GroundChests = new ToggleNode(false);
             ShaperItems = new ToggleNode(true);
             ElderItems = new ToggleNode(true);
             HunterItems = new ToggleNode(true);
+            VeiledItems = new ToggleNode(true);
             RedeemerItems = new ToggleNode(true);
             CrusaderItems = new ToggleNode(true);
             WarlordItems = new ToggleNode(true);
             FracturedItems = new ToggleNode(true);
+            HeistItems = new ToggleNode(true);
             Rares = new ToggleNode(true);
             RareJewels = new ToggleNode(true);
             RareRings = new ToggleNode(true);
@@ -53,13 +59,15 @@ namespace PickIt
             RareHelmetsilvl = new RangeNode<int>(1, 0, 100);
             RareWeapon = new ToggleNode(false);
             RareWeaponWidth = new RangeNode<int>(2, 1, 2);
-            RareWeaponHeight = new RangeNode<int>(3, 1, 4);
-            ItemCells = new RangeNode<int>(4, 1, 8);
+            RareWeaponHeight = new RangeNode<int>(4, 1, 4);
             RareWeaponilvl = new RangeNode<int>(1, 0, 100);
             RareArmour = new ToggleNode(false);
             RareArmourilvl = new RangeNode<int>(1, 0, 100);
             RareShield = new ToggleNode(false);
             RareShieldilvl = new RangeNode<int>(1, 0, 100);
+            RareShieldWidth = new RangeNode<int>(2, 1, 2);
+            RareShieldHeight = new RangeNode<int>(4, 1, 4);
+            FullRareSetManagerOverrideAllowIdentifiedItems = new ToggleNode(false);
             PickUpEverything = new ToggleNode(false);
             NormalRuleFile = string.Empty;
             MagicRuleFile = string.Empty;
@@ -71,7 +79,7 @@ namespace PickIt
             MouseSpeed = new RangeNode<float>(1, 0, 30);
         }
 
-        public ToggleNode Enable { get; set; }
+        public ToggleNode Enable { get; set; }   
         public HotkeyNode PickUpKey { get; set; }
         public RangeNode<int> PickupRange { get; set; }
         public RangeNode<int> ChestRange { get; set; }
@@ -79,10 +87,12 @@ namespace PickIt
         public ToggleNode ShaperItems { get; set; }
         public ToggleNode ElderItems { get; set; }
         public ToggleNode HunterItems { get; set; }
+        public ToggleNode VeiledItems { get; set; }
         public ToggleNode CrusaderItems { get; set; }
         public ToggleNode WarlordItems { get; set; }
         public ToggleNode RedeemerItems { get; set; }
         public ToggleNode FracturedItems { get; set; }
+        public ToggleNode HeistItems { get; set; }
         public ToggleNode Rares { get; set; }
         public ToggleNode RareJewels { get; set; }
         public ToggleNode RareRings { get; set; }
@@ -101,17 +111,21 @@ namespace PickIt
         public RangeNode<int> RareArmourilvl { get; set; }
         public ToggleNode RareShield { get; set; }
         public RangeNode<int> RareShieldilvl { get; set; }
+        public RangeNode<int> RareShieldWidth { get; set; }
+        public RangeNode<int> RareShieldHeight { get; set; }
         public ToggleNode RareWeapon { get; set; }
         public RangeNode<int> RareWeaponWidth { get; set; }
         public RangeNode<int> RareWeaponHeight { get; set; }
-        public RangeNode<int> ItemCells { get; set; }
         public RangeNode<int> RareWeaponilvl { get; set; }
+        public ToggleNode FullRareSetManagerOverrideAllowIdentifiedItems { get; set; }
         public EmptyNode LinkSocketRgbEmptyNode { get; set; }
         public ToggleNode Sockets { get; set; }
         public RangeNode<int> TotalSockets { get; set; }
         public ToggleNode Links { get; set; }
         public RangeNode<int> LargestLink { get; set; }
         public ToggleNode RGB { get; set; }
+        public RangeNode<int> RGBWidth { get; set; }
+        public RangeNode<int> RGBHeight { get; set; }
         public EmptyNode AllOverridEmptyNode { get; set; }
         public ToggleNode PickUpEverything { get; set; }
         public ToggleNode AllDivs { get; set; }
@@ -124,6 +138,8 @@ namespace PickIt
         public ToggleNode MapFragments { get; set; }
         public ToggleNode Gems { get; set; }
         public RangeNode<int> GemQuality { get; set; }
+        public ToggleNode Flasks { get; set; }
+        public RangeNode<int> FlasksQuality { get; set; }
         public ToggleNode QuestItems { get; set; }
         public ToggleNode GroundChests { get; set; }
         public ToggleNode LeftClickToggleNode { get; set; }
@@ -137,5 +153,25 @@ namespace PickIt
         public ToggleNode ReturnMouseToBeforeClickPosition { get; set; } = new ToggleNode(true);
         public RangeNode<int> TimeBeforeNewClick { get; set; } = new RangeNode<int>(500, 0, 1500);
         public ToggleNode UseWeight { get; set; } = new ToggleNode(false);
+        public ToggleNode LazyLooting { get; set; } = new ToggleNode(false);
+        public HotkeyNode LazyLootingPauseKey { get; set; } = new HotkeyNode(Keys.Space);
+
+        public ToggleNode FullRareSetManagerOverride { get; set; } = new ToggleNode(false);
+        public FRSMOverrides FullRareSetManagerPickupOverrides { get; set; } = new FRSMOverrides();
+
+        public class FRSMOverrides
+        {
+            public int Weapons { get; set; } = -1;
+            public int Helmets { get; set; } = -1;
+            public int BodyArmors { get; set; } = -1;
+            public int Gloves { get; set; } = -1;
+            public int Boots { get; set; } = -1;
+            public int Belts { get; set; } = -1;
+            public int Amulets { get; set; } = -1;
+            public int Rings { get; set; } = -1;
+
+            public int MinItemLevel { get; set; } = 60;
+            public int MaxItemLevel { get; set; } = 74;
+        }
     }
 }
