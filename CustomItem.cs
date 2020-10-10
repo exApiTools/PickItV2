@@ -53,6 +53,7 @@ namespace PickIt
                     Width = baseItemType.Width;
                     Height = baseItemType.Height;
                     if (weightsRules.TryGetValue(BaseName, out var w)) Weight = w;
+                    if (ClassName.StartsWith("Heist")) IsHeist = true;
                 }
 
                 IsValid = true;
@@ -92,6 +93,7 @@ namespace PickIt
                     Width = baseItemType.Width;
                     Height = baseItemType.Height;
                     if (weightsRules.TryGetValue(BaseName, out var w)) Weight = w;
+                    if (ClassName.StartsWith("Heist")) IsHeist = true;
                 }
 
                 var WeaponClass = new List<string>
@@ -136,6 +138,7 @@ namespace PickIt
                     IsIdentified = mods.Identified;
                     ItemLevel = mods.ItemLevel;
                     IsFractured = mods.HaveFractured;
+                    IsVeiled = mods.ItemMods.Any(m => m.DisplayName.Contains("Veil"));
                 }
 
                 if (GroundItem.HasComponent<Sockets>())
@@ -146,7 +149,10 @@ namespace PickIt
                     LargestLink = sockets.LargestLinkSize;
                 }
 
-                if (WeaponClass.Any(ClassName.Equals)) IsWeapon = true;
+                if (GroundItem.HasComponent<Weapon>())
+                {
+                    IsWeapon = true;
+                }
 
                 MapTier = GroundItem.HasComponent<Map>() ? GroundItem.GetComponent<Map>().Tier : 0;
                 IsValid = true;
@@ -170,6 +176,8 @@ namespace PickIt
         public bool IsRedeemer { get; }
         public bool IsCrusader { get; }
         public bool IsWarlord { get; }
+        public bool IsHeist { get; }
+        public bool IsVeiled { get; }
         public bool IsWeapon { get; }
         public int ItemLevel { get; }
         public int LargestLink { get; }
