@@ -17,6 +17,7 @@ using System.Linq;
 using System.Windows.Forms;
 using Newtonsoft.Json;
 using Input = ExileCore.Input;
+using nuVector2 = System.Numerics.Vector2;
 
 namespace PickIt
 {
@@ -36,6 +37,7 @@ namespace PickIt
         private HashSet<string> _normalRules;
         private HashSet<string> _rareRules;
         private HashSet<string> _uniqueRules;
+        private HashSet<string> _ignoreRules;
         private Dictionary<string, int> _weightsRules = new Dictionary<string, int>();
         private WaitTime _workCoroutine;
         public DateTime buildDate;
@@ -53,6 +55,9 @@ namespace PickIt
         public string UniqueRuleFile;
         private WaitTime waitPlayerMove = new WaitTime(10);
         private List<string> _customItems = new List<string>();
+        public int[,] inventorySlots { get; set; } = new int[0,0];
+        public ServerInventory InventoryItems { get; set; }
+        public static PickIt Controller { get; set; }
 
 
         public FRSetManagerPublishInformation FullRareSetManagerData = new FRSetManagerPublishInformation();
@@ -67,6 +72,7 @@ namespace PickIt
 
         public override bool Initialise()
         {
+            Controller = this;
             pickItCoroutine = new Coroutine(MainWorkCoroutine(), this, "Pick It");
             Core.ParallelRunner.Run(pickItCoroutine);
             pickItCoroutine.Pause();
@@ -105,6 +111,9 @@ namespace PickIt
 
         public override void DrawSettings()
         {
+            Settings.ShowInventoryView.Value = ImGuiExtension.Checkbox("Show Inventory Slots", Settings.ShowInventoryView.Value);
+            Settings.MoveInventoryView.Value = ImGuiExtension.Checkbox("Moveable Inventory Slots", Settings.MoveInventoryView.Value);
+
             Settings.PickUpKey = ImGuiExtension.HotkeySelector("Pickup Key: " + Settings.PickUpKey.Value.ToString(), Settings.PickUpKey);
             Settings.LeftClickToggleNode.Value = ImGuiExtension.Checkbox("Mouse Button: " + (Settings.LeftClickToggleNode ? "Left" : "Right"), Settings.LeftClickToggleNode);
             Settings.LeftClickToggleNode.Value = ImGuiExtension.Checkbox("Return Mouse To Position Before Click", Settings.ReturnMouseToBeforeClickPosition);
@@ -133,6 +142,8 @@ namespace PickIt
                 if (tempRef) _uniqueRules = LoadPickit(Settings.UniqueRuleFile);
                 Settings.WeightRuleFile = ImGuiExtension.ComboBox("Weight Rules", Settings.WeightRuleFile, PickitFiles, out tempRef);
                 if (tempRef) _weightsRules = LoadWeights(Settings.WeightRuleFile);
+                Settings.IgnoreRuleFile = ImGuiExtension.ComboBox("Ignore Rules", Settings.IgnoreRuleFile, PickitFiles, out tempRef);
+                if (tempRef) _ignoreRules = LoadPickit(Settings.IgnoreRuleFile);
             }
 
             if (ImGui.CollapsingHeader("Item Logic", ImGuiTreeNodeFlags.Framed | ImGuiTreeNodeFlags.DefaultOpen))
@@ -245,6 +256,8 @@ namespace PickIt
                     Settings.RareWeaponHeight.Value = ImGuiExtension.IntSlider("Maximum Height##RareWeaponHeight", Settings.RareWeaponHeight);
                     if (ImGui.TreeNode("Full Rare Set Manager Integration##FRSMI"))
                     {
+                        ImGui.BulletText("You must use github.com/DetectiveSquirrel/FullRareSetManager in order to utilize this section\nThis will determine what items are still needed to be picked up\nfor the chaos recipe, it uses FRSM's count to check this.'");
+                        ImGui.Spacing();
                         Settings.FullRareSetManagerOverride.Value = ImGuiExtension.Checkbox("Override Rare Pickup with Full Rare Set Managers' needed pieces", Settings.FullRareSetManagerOverride);
 
                         Settings.FullRareSetManagerOverrideAllowIdentifiedItems.Value = ImGuiExtension.Checkbox("Pickup Identified items?", Settings.FullRareSetManagerOverrideAllowIdentifiedItems);
@@ -278,6 +291,9 @@ namespace PickIt
 
         public override Job Tick()
         {
+            InventoryItems = GameController.Game.IngameState.ServerData.PlayerInventories[0].Inventory;
+            inventorySlots = Misc.GetInventoryArray(InventoryItems);
+            DrawIgnoredCellsSettings();
             if (Input.GetKeyState(Settings.LazyLootingPauseKey)) DisableLazyLootingTill = DateTime.Now.AddSeconds(2);
             if (Input.GetKeyState(Keys.Escape)) pickItCoroutine.Pause();
 
@@ -318,11 +334,53 @@ namespace PickIt
             return null;
         }
 
+
+
+        //TODO: Make function pretty
+
+        private void DrawIgnoredCellsSettings()
+        {
+            if (!Settings.ShowInventoryView.Value)
+                return;
+
+            var _opened = true;
+
+            var MoveableFlag = ImGuiWindowFlags.NoScrollbar |
+                               ImGuiWindowFlags.NoTitleBar |
+                               ImGuiWindowFlags.NoFocusOnAppearing | ImGuiWindowFlags.NoSavedSettings;
+
+            var NonMoveableFlag = ImGuiWindowFlags.NoScrollbar | ImGuiWindowFlags.NoBackground |
+                                  ImGuiWindowFlags.NoTitleBar |
+                                  ImGuiWindowFlags.NoInputs |
+                                  ImGuiWindowFlags.NoFocusOnAppearing | ImGuiWindowFlags.NoSavedSettings;
+
+            ImGui.SetNextWindowPos(Settings.InventorySlotsVector2, ImGuiCond.Once, nuVector2.Zero);
+
+            if (ImGui.Begin($"{Name}", ref _opened,
+                Settings.MoveInventoryView.Value ? MoveableFlag : NonMoveableFlag))
+            {
+                var _numb = 1;
+                for (var i = 0; i < 5; i++)
+                for (var j = 0; j < 12; j++)
+                {
+                    var toggled = Convert.ToBoolean(inventorySlots[i, j]);
+                    if (ImGui.Checkbox($"##{_numb}IgnoredCells", ref toggled)) inventorySlots[i, j] ^= 1;
+
+                    if ((_numb - 1) % 12 < 11) ImGui.SameLine();
+
+                    _numb += 1;
+                }
+
+                Settings.InventorySlotsVector2 = ImGui.GetWindowPos();
+                ImGui.End();
+            }
+        }
+
         public bool InCustomList(HashSet<string> checkList, CustomItem itemEntity, ItemRarity rarity)
         {
-            if (checkList.Contains(itemEntity.BaseName) && itemEntity.Rarity == rarity)
+            if (checkList.Contains(itemEntity.BaseName) && !_ignoreRules.Contains(itemEntity.BaseName) && itemEntity.Rarity == rarity)
                 return true;
-            if (checkList.Contains(itemEntity.ClassName) && itemEntity.Rarity == rarity)
+            if (checkList.Contains(itemEntity.ClassName) && !_ignoreRules.Contains(itemEntity.ClassName) && itemEntity.Rarity == rarity)
                 return true;
             return false;
         }
@@ -331,6 +389,9 @@ namespace PickIt
         {
             try
             {
+                if (_ignoreRules.Contains(item.BaseName) || _ignoreRules.Contains(item.ClassName))
+                    return false;
+
                 #region Currency
 
                 if (Settings.AllCurrency && item.ClassName.EndsWith("Currency"))
@@ -413,8 +474,8 @@ namespace PickIt
                     var maxPickupOverides = Settings.FullRareSetManagerPickupOverrides;
 
                     if (Settings.FullRareSetManagerOverride.Value &&
-                        maxPickupOverides.MinItemLevel > -1 ? item.ItemLevel >= maxPickupOverides.MinItemLevel : item.ItemLevel >= 60 &&
-                        maxPickupOverides.MaxItemLevel > -1 ? item.ItemLevel <= maxPickupOverides.MaxItemLevel : item.ItemLevel <= 74)
+                        (maxPickupOverides.MinItemLevel > -1 ? item.ItemLevel >= maxPickupOverides.MinItemLevel : item.ItemLevel >= 60) &&
+                        (maxPickupOverides.MaxItemLevel > -1 ? item.ItemLevel <= maxPickupOverides.MaxItemLevel : item.ItemLevel <= 74))
                     { 
 
                         if (item.IsIdentified && !Settings.FullRareSetManagerOverrideAllowIdentifiedItems.Value)
@@ -431,9 +492,9 @@ namespace PickIt
                             if (item.Width <= Settings.RareWeaponWidth && item.Height <= Settings.RareWeaponHeight) return true;
 
                     }
-                    else  
+                    else
                     {
-                        if (Settings.RareRings && item.ClassName == "Ring" && item.ItemLevel >= Settings.RareRingsilvl) return true;
+                        if (Settings.RareRings && item.ClassName == "Ring" && item.ItemLevel >= Settings.RareRingsilvl) return true; 
                         if (Settings.RareAmulets && item.ClassName == "Amulet" && item.ItemLevel >= Settings.RareAmuletsilvl) return true;
                         if (Settings.RareBelts && item.ClassName == "Belt" && item.ItemLevel >= Settings.RareBeltsilvl) return true;
                         if (Settings.RareGloves && item.ClassName == "Gloves" && item.ItemLevel >= Settings.RareGlovesilvl) return true;
@@ -641,7 +702,10 @@ namespace PickIt
             GameController.Debug["PickIt"] = currentLabels;
             var rectangleOfGameWindow = GameController.Window.GetWindowRectangleTimeCache;
             rectangleOfGameWindow.Inflate(-36, -36);
-            var pickUpThisItem = currentLabels.FirstOrDefault(x => DoWePickThis(x) && x.Distance < Settings.PickupRange && x.GroundItem != null && rectangleOfGameWindow.Intersects(new RectangleF(x.LabelOnGround.Label.GetClientRectCache.Center.X, x.LabelOnGround.Label.GetClientRectCache.Center.Y, 3, 3)));
+            var pickUpThisItem = currentLabels.FirstOrDefault(x =>
+                DoWePickThis(x) && x.Distance < Settings.PickupRange && x.GroundItem != null &&
+                rectangleOfGameWindow.Intersects(new RectangleF(x.LabelOnGround.Label.GetClientRectCache.Center.X,
+                    x.LabelOnGround.Label.GetClientRectCache.Center.Y, 3, 3)) && Misc.CanFitInventory(x));
             
             if (Input.GetKeyState(Settings.PickUpKey.Value) ||
                 CanLazyLoot() && ShouldLazyLoot(pickUpThisItem))
@@ -791,6 +855,7 @@ namespace PickIt
             _rareRules = LoadPickit(Settings.RareRuleFile);
             _uniqueRules = LoadPickit(Settings.UniqueRuleFile);
             _weightsRules = LoadWeights(Settings.WeightRuleFile);
+            _ignoreRules = LoadPickit(Settings.IgnoreRuleFile);
         }
 
         public HashSet<string> LoadPickit(string fileName)
