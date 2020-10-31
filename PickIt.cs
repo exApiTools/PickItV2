@@ -325,7 +325,7 @@ namespace PickIt
             if (DebugTimer.ElapsedMilliseconds > 300)
             {
                 FullWork = true;
-                //LogMessage("Error pick it stop after time limit 300 ms", 1);
+                LogMessage("Error pick it stop after time limit 300 ms", 1);
                 DebugTimer.Reset();
             }
             //Graphics.DrawText($@"PICKIT :: Debug Tick Timer ({DebugTimer.ElapsedMilliseconds}ms)", new Vector2(100, 100), FontAlign.Left);
@@ -354,7 +354,7 @@ namespace PickIt
                                   ImGuiWindowFlags.NoInputs |
                                   ImGuiWindowFlags.NoFocusOnAppearing | ImGuiWindowFlags.NoSavedSettings;
 
-            ImGui.SetNextWindowPos(Settings.InventorySlotsVector2, ImGuiCond.Once, nuVector2.Zero);
+            ImGui.SetNextWindowPos(Settings.InventorySlotsVector2, ImGuiCond.Always, nuVector2.Zero);
 
             if (ImGui.Begin($"{Name}", ref _opened,
                 Settings.MoveInventoryView.Value ? MoveableFlag : NonMoveableFlag))
@@ -371,7 +371,9 @@ namespace PickIt
                     _numb += 1;
                 }
 
-                Settings.InventorySlotsVector2 = ImGui.GetWindowPos();
+                if (Settings.MoveInventoryView.Value)
+                    Settings.InventorySlotsVector2 = ImGui.GetWindowPos();
+
                 ImGui.End();
             }
         }
@@ -678,7 +680,7 @@ namespace PickIt
 
             if (Settings.UseWeight)
             {
-                currentLabels = GameController.Game.IngameState.IngameUi.ItemsOnGroundLabels
+                currentLabels = GameController.Game.IngameState.IngameUi.ItemsOnGroundLabelsVisible
                     .Where(x => x.Address != 0 &&
                                 x.ItemOnGround?.Path != null &&
                                 x.IsVisible && x.Label.GetClientRectCache.Center.PointInRectangle(rect) &&
@@ -689,7 +691,8 @@ namespace PickIt
             }
             else
             {
-                currentLabels = GameController.Game.IngameState.IngameUi.ItemsOnGroundLabels
+                //Linq query probably not performant enough for delirium amount of loots
+                currentLabels = GameController.Game.IngameState.IngameUi.ItemsOnGroundLabelsVisible
                     .Where(x => x.Address != 0 &&
                                 x.ItemOnGround?.Path != null &&
                                 x.IsVisible && x.Label.GetClientRectCache.Center.PointInRectangle(rect) &&
@@ -821,7 +824,7 @@ namespace PickIt
 
             tryCount = 0;
 
-            while (GameController.Game.IngameState.IngameUi.ItemsOnGroundLabels.FirstOrDefault(
+            while (GameController.Game.IngameState.IngameUi.ItemsOnGroundLabelsVisible.FirstOrDefault(
                        x => x.Address == pickItItem.LabelOnGround.Address) != null && tryCount < 6)
             {
                 tryCount++;
