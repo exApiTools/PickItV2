@@ -50,6 +50,10 @@
     <CodeAnalysisRuleSet>MinimumRecommendedRules.ruleset</CodeAnalysisRuleSet>
   </PropertyGroup>
   <ItemGroup>
+    <Reference Include="Antlr4.Runtime">
+      <HintPath>..\..\..\..\PoeHelper\Antlr4.Runtime.dll</HintPath>
+      <Private>False</Private>
+    </Reference>
     <Reference Include="ExileCore">
       <HintPath>..\..\..\..\PoeHelper\ExileCore.dll</HintPath>
       <Private>False</Private>
@@ -58,12 +62,20 @@
       <HintPath>..\..\..\deps\ImGui.NET.dll</HintPath>
       <Private>False</Private>
     </Reference>
+    <Reference Include="JM.LinqFaster">
+      <HintPath>..\..\..\..\PoeHelper\JM.LinqFaster.dll</HintPath>
+      <Private>False</Private>
+    </Reference>
+    <Reference Include="MoreLinq">
+      <HintPath>..\..\..\..\PoeHelper\MoreLinq.dll</HintPath>
+      <Private>False</Private>
+    </Reference>
     <Reference Include="mscorlib" />
-    <Reference Include="Newtonsoft.Json, Version=12.0.0.0, Culture=neutral, PublicKeyToken=30ad4fe6b2a6aeed, processorArchitecture=MSIL">
+    <Reference Include="Newtonsoft.Json">
       <HintPath>..\..\..\packages\Newtonsoft.Json.12.0.3\lib\net45\Newtonsoft.Json.dll</HintPath>
       <Private>False</Private>
     </Reference>
-    <Reference Include="SharpDX, Version=4.2.0.0, Culture=neutral, PublicKeyToken=b4dcf0f35e5521f1, processorArchitecture=MSIL">
+    <Reference Include="SharpDX">
       <HintPath>..\..\..\packages\SharpDX.4.2.0\lib\net45\SharpDX.dll</HintPath>
       <Private>False</Private>
     </Reference>
