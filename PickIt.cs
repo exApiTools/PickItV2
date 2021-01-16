@@ -43,7 +43,6 @@ namespace PickIt
         public DateTime buildDate;
         private uint coroutineCounter;
         private Vector2 cursorBeforePickIt;
-        private bool CustomRulesExists = true;
         private bool FullWork = true;
         private Element LastLabelClick;
         public string MagicRuleFile;
@@ -292,7 +291,7 @@ namespace PickIt
         public override Job Tick()
         {
             InventoryItems = GameController.Game.IngameState.ServerData.PlayerInventories[0].Inventory;
-            inventorySlots = Misc.GetInventoryArray(InventoryItems);
+            inventorySlots = Misc.GetContainer2DArray(InventoryItems);
             DrawIgnoredCellsSettings();
             if (Input.GetKeyState(Settings.LazyLootingPauseKey)) DisableLazyLootingTill = DateTime.Now.AddSeconds(2);
             if (Input.GetKeyState(Keys.Escape)) pickItCoroutine.Pause();
@@ -354,7 +353,7 @@ namespace PickIt
                                   ImGuiWindowFlags.NoInputs |
                                   ImGuiWindowFlags.NoFocusOnAppearing | ImGuiWindowFlags.NoSavedSettings;
 
-            ImGui.SetNextWindowPos(Settings.InventorySlotsVector2, ImGuiCond.Once, nuVector2.Zero);
+            ImGui.SetNextWindowPos(Settings.InventorySlotsVector2, ImGuiCond.Always, nuVector2.Zero);
 
             if (ImGui.Begin($"{Name}", ref _opened,
                 Settings.MoveInventoryView.Value ? MoveableFlag : NonMoveableFlag))
@@ -371,7 +370,9 @@ namespace PickIt
                     _numb += 1;
                 }
 
-                Settings.InventorySlotsVector2 = ImGui.GetWindowPos();
+                if (Settings.MoveInventoryView.Value)
+                    Settings.InventorySlotsVector2 = ImGui.GetWindowPos();
+
                 ImGui.End();
             }
         }
@@ -596,8 +597,6 @@ namespace PickIt
 
             #region Rarity Rule Switch
 
-            if (CustomRulesExists)
-            {
                 switch (itemEntity.Rarity)
                 {
                     case ItemRarity.Normal:
@@ -633,7 +632,6 @@ namespace PickIt
 
                         break;
                 }
-            }
 
             #endregion
 
@@ -677,7 +675,7 @@ namespace PickIt
 
             if (Settings.UseWeight)
             {
-                currentLabels = GameController.Game.IngameState.IngameUi.ItemsOnGroundLabels
+                currentLabels = GameController.Game.IngameState.IngameUi.ItemsOnGroundLabelsVisible
                     .Where(x => x.Address != 0 &&
                                 x.ItemOnGround?.Path != null && x.ItemOnGround.HasComponent<WorldItem>() &&
                                 x.IsVisible && x.Label.GetClientRectCache.Center.PointInRectangle(window) &&
@@ -688,7 +686,7 @@ namespace PickIt
             }
             else
             {
-                currentLabels = GameController.Game.IngameState.IngameUi.ItemsOnGroundLabels
+                currentLabels = GameController.Game.IngameState.IngameUi.ItemsOnGroundLabelsVisible
                     .Where(x => x.Address != 0 &&
                                 x.ItemOnGround?.Path != null && x.ItemOnGround.HasComponent<WorldItem>() &&
                                 x.IsVisible && x.Label.GetClientRectCache.Center.PointInRectangle(window) &&
@@ -820,7 +818,7 @@ namespace PickIt
 
             tryCount = 0;
 
-            while (GameController.Game.IngameState.IngameUi.ItemsOnGroundLabels.FirstOrDefault(
+            while (GameController.Game.IngameState.IngameUi.ItemsOnGroundLabelsVisible.FirstOrDefault(
                        x => x.Address == pickItItem.LabelOnGround.Address) != null && tryCount < 6)
             {
                 tryCount++;
@@ -842,7 +840,6 @@ namespace PickIt
             if (!Directory.Exists(PickitConfigFileDirectory))
             {
                 Directory.CreateDirectory(PickitConfigFileDirectory);
-                CustomRulesExists = false;
                 return;
             }
 
@@ -863,7 +860,6 @@ namespace PickIt
 
             if (fileName == string.Empty)
             {
-                CustomRulesExists = false;
                 return hashSet;
             }
 
@@ -871,7 +867,6 @@ namespace PickIt
 
             if (!File.Exists(pickitFile))
             {
-                CustomRulesExists = false;
                 return hashSet;
             }
 
