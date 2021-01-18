@@ -42,9 +42,7 @@ namespace PickIt
         private WaitTime _workCoroutine;
         public DateTime buildDate;
         private uint coroutineCounter;
-        private Vector2 cursorBeforePickIt;
         private bool FullWork = true;
-        private Element LastLabelClick;
         public string MagicRuleFile;
         private WaitTime mainWorkCoroutine = new WaitTime(5);
         public string NormalRuleFile;
@@ -896,7 +894,7 @@ namespace PickIt
                     var s = x.Split('=');
                     if (s.Length == 2) result[s[0].Trim()] = int.Parse(s[1]);
                 }
-                catch (Exception e)
+                catch (Exception)
                 {
                     DebugWindow.LogError($"{nameof(PickIt)} => Error when parse weight.");
                 }
