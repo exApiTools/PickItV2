@@ -561,16 +561,13 @@ namespace PickIt
                 #endregion
 
                 #region Custom Rules
-                if (item.BaseName.Contains("Watchstone"))
-                    return true;
-                if (item.BaseName.Contains("Incubator"))
-                    return true;
-                if (item.BaseName.Contains(" Seed"))
-                    return true;
-                if (item.BaseName.Contains(" Grain"))
-                    return true;
-                if (item.BaseName.Contains(" Bulb"))
-                    return true;
+                if (_customItems.Contains(item.BaseName)) return true;
+                if (item.BaseName.Contains("Watchstone")) return true;
+                if (item.BaseName.Contains("Incubator")) return true;
+                if (item.BaseName.Contains(" Seed")) return true;
+                if (item.BaseName.Contains(" Grain")) return true;
+                if (item.BaseName.Contains(" Bulb")) return true;
+                if (item.BaseName.Contains(" Cluster ")) return true;
                 #endregion
             }
             catch (Exception e)
