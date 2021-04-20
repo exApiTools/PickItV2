@@ -293,6 +293,9 @@ namespace PickIt
 
         public override Job Tick()
         {
+            if (GameController.Game.IngameState.ServerData.PlayerInventories.Count == 0)
+                return null;
+
             InventoryItems = GameController.Game.IngameState.ServerData.PlayerInventories[0].Inventory;
             inventorySlots = Misc.GetContainer2DArray(InventoryItems);
             DrawIgnoredCellsSettings();
