@@ -293,7 +293,8 @@ namespace PickIt
 
         public override Job Tick()
         {
-            if (GameController.Game.IngameState.ServerData.PlayerInventories.Count == 0)
+            var playerInvCount = GameController?.Game?.IngameState?.ServerData?.PlayerInventories?.Count;
+            if ( playerInvCount == null || playerInvCount == 0)
                 return null;
 
             InventoryItems = GameController.Game.IngameState.ServerData.PlayerInventories[0].Inventory;
