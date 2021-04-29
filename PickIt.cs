@@ -690,7 +690,7 @@ namespace PickIt
             rectangleOfGameWindow.Inflate(-36, -36);
             var pickUpThisItem = UpdateCacheList?.Value.FirstOrDefault(x =>
                 DoWePickThis(x) && x.Distance < Settings.PickupRange && x.GroundItem != null &&
-                rectangleOfGameWindow.Intersects(new RectangleF(x.LabelOnGround.Label.GetClientRectCache.Center.X,
+                rectangleOfGameWindow.Intersects(new RectangleF(x.LabelOnGround.Label.GetClientRectCache.Center.X + rectangleOfGameWindow.X,
                     x.LabelOnGround.Label.GetClientRectCache.Center.Y, 3, 3)) && Misc.CanFitInventory(x));
             
             if (Input.GetKeyState(Settings.PickUpKey.Value) ||
