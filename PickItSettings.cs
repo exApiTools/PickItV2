@@ -10,7 +10,7 @@ namespace PickIt
         public PickItSettings()
         {
             Enable = new ToggleNode(false);
-            PickUpKey = Keys.F1;
+            PickUpKey = Keys.F;
             PickupRange = new RangeNode<int>(600, 1, 1000);
             ChestRange = new RangeNode<int>(500, 1, 1000);
             ExtraDelay = new RangeNode<int>(0, 0, 200);
