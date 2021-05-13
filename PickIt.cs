@@ -192,7 +192,6 @@ namespace PickIt
                 {
                     Settings.UseWeight.Value = ImGuiExtension.Checkbox("Use Weight", Settings.UseWeight);
                     Settings.IgnoreScrollOfWisdom.Value = ImGuiExtension.Checkbox("Ignore Scroll Of Wisdom", Settings.IgnoreScrollOfWisdom);
-                    Settings.PickUpEverything.Value = ImGuiExtension.Checkbox("Pickup Everything", Settings.PickUpEverything);
                     Settings.AllDivs.Value = ImGuiExtension.Checkbox("All Divination Cards", Settings.AllDivs);
                     Settings.AllCurrency.Value = ImGuiExtension.Checkbox("All Currency", Settings.AllCurrency);
                     Settings.AllUniques.Value = ImGuiExtension.Checkbox("All Uniques", Settings.AllUniques);
@@ -592,80 +591,6 @@ namespace PickIt
             return false;
         }
 
-        public bool DoWePickThis(CustomItem itemEntity)
-        {
-            if (!itemEntity.IsValid)
-                return false;
-
-            var pickItemUp = false;
-
-
-            #region Force Pickup All
-
-            if (Settings.PickUpEverything)
-            {
-                return true;
-            }
-
-            #endregion
-
-            #region Rarity Rule Switch
-
-                switch (itemEntity.Rarity)
-                {
-                    case ItemRarity.Normal:
-                        if (_normalRules != null)
-                        {
-                            if (InCustomList(_normalRules, itemEntity, itemEntity.Rarity))
-                                pickItemUp = true;
-                        }
-
-                        break;
-                    case ItemRarity.Magic:
-                        if (_magicRules != null)
-                        {
-                            if (InCustomList(_magicRules, itemEntity, itemEntity.Rarity))
-                                pickItemUp = true;
-                        }
-
-                        break;
-                    case ItemRarity.Rare:
-                        if (_rareRules != null)
-                        {
-                            if (InCustomList(_rareRules, itemEntity, itemEntity.Rarity))
-                                pickItemUp = true;
-                        }
-
-                        break;
-                    case ItemRarity.Unique:
-                        if (_uniqueRules != null)
-                        {
-                            if (InCustomList(_uniqueRules, itemEntity, itemEntity.Rarity))
-                                pickItemUp = true;
-                        }
-
-                        break;
-                }
-
-            #endregion
-
-            #region Override Rules
-
-            if (OverrideChecks(itemEntity)) pickItemUp = true;
-
-            #endregion
-
-            #region Metamorph
-
-            if (itemEntity.IsMetaItem)
-            {
-                pickItemUp = true;
-            }
-
-            #endregion
-
-            return pickItemUp;
-        }
         public override void ReceiveEvent(string eventId, object args)
         {
             if (eventId == "start_pick_it")
@@ -725,7 +650,7 @@ namespace PickIt
             var rectangleOfGameWindow = GameController.Window.GetWindowRectangleTimeCache;
             rectangleOfGameWindow.Inflate(-36, -36);
             var pickUpThisItem = currentLabels.FirstOrDefault(x =>
-                DoWePickThis(x) && x.Distance < Settings.PickupRange && x.GroundItem != null &&
+                x.Distance < Settings.PickupRange && x.GroundItem != null &&
                 rectangleOfGameWindow.Intersects(new RectangleF(x.LabelOnGround.Label.GetClientRectCache.Center.X,
                     x.LabelOnGround.Label.GetClientRectCache.Center.Y, 3, 3)) && Misc.CanFitInventory(x));
             

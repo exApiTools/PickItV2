@@ -69,7 +69,6 @@ namespace PickIt
             RareShieldWidth = new RangeNode<int>(2, 1, 2);
             RareShieldHeight = new RangeNode<int>(4, 1, 4);
             FullRareSetManagerOverrideAllowIdentifiedItems = new ToggleNode(false);
-            PickUpEverything = new ToggleNode(false);
             NormalRuleFile = string.Empty;
             MagicRuleFile = string.Empty;
             RareRuleFile = string.Empty;
@@ -129,7 +128,6 @@ namespace PickIt
         public RangeNode<int> RGBWidth { get; set; }
         public RangeNode<int> RGBHeight { get; set; }
         public EmptyNode AllOverridEmptyNode { get; set; }
-        public ToggleNode PickUpEverything { get; set; }
         public ToggleNode AllDivs { get; set; }
         public ToggleNode AllCurrency { get; set; }
         public ToggleNode IgnoreScrollOfWisdom { get; set; }
