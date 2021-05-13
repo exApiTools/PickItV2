@@ -70,6 +70,14 @@ namespace PickIt
 
         public override bool Initialise()
         {
+            #region Register keys
+
+            Settings.PickUpKey.OnValueChanged += () => Input.RegisterKey(Settings.PickUpKey);
+            Input.RegisterKey(Settings.PickUpKey);
+            Input.RegisterKey(Keys.Escape);
+
+            #endregion
+            
             Controller = this;
             pickItCoroutine = new Coroutine(MainWorkCoroutine(), this, "Pick It");
             Core.ParallelRunner.Run(pickItCoroutine);
