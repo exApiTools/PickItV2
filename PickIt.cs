@@ -59,9 +59,8 @@ namespace PickIt
         public int[,] inventorySlots { get; set; } = new int[0,0];
         public ServerInventory InventoryItems { get; set; }
         public static PickIt Controller { get; set; }
-
-
         public FRSetManagerPublishInformation FullRareSetManagerData = new FRSetManagerPublishInformation();
+        private bool _enabled;
 
         public PickIt()
         {
@@ -301,9 +300,14 @@ namespace PickIt
             inventorySlots = Misc.GetContainer2DArray(InventoryItems);
             DrawIgnoredCellsSettings();
             if (Input.GetKeyState(Settings.LazyLootingPauseKey)) DisableLazyLootingTill = DateTime.Now.AddSeconds(2);
-            if (Input.GetKeyState(Keys.Escape)) pickItCoroutine.Pause();
+            if (Input.GetKeyState(Keys.Escape))
+            {
+                _enabled = false;
+                pickItCoroutine.Pause();
+            }
 
-            if (Input.GetKeyState(Settings.PickUpKey.Value) ||
+            if (_enabled ||
+                Input.GetKeyState(Settings.PickUpKey.Value) ||
                 CanLazyLoot())
             {
                 DebugTimer.Restart();
@@ -658,6 +662,15 @@ namespace PickIt
         }
         public override void ReceiveEvent(string eventId, object args)
         {
+            if (eventId == "start_pick_it")
+            {
+                _enabled = true;
+            }
+            if (eventId == "end_pick_it")
+            {
+                _enabled = false;
+            }
+            
             if (!Settings.Enable.Value) return;
 
             if (eventId == "frsm_display_data")
@@ -693,7 +706,8 @@ namespace PickIt
                 rectangleOfGameWindow.Intersects(new RectangleF(x.LabelOnGround.Label.GetClientRectCache.Center.X + rectangleOfGameWindow.X,
                     x.LabelOnGround.Label.GetClientRectCache.Center.Y, 3, 3)) && Misc.CanFitInventory(x));
             
-            if (Input.GetKeyState(Settings.PickUpKey.Value) ||
+            if (_enabled ||
+                Input.GetKeyState(Settings.PickUpKey.Value) ||
                 CanLazyLoot() && ShouldLazyLoot(pickUpThisItem))
             {
                 yield return TryToPickV2(pickUpThisItem);
