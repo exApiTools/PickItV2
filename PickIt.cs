@@ -821,7 +821,11 @@ namespace PickIt
                 //{
                 //    yield return waitPlayerMove;
                 //}
-                var vector2 = completeItemLabel.GetClientRect().ClickRandom() + _clickWindowOffset;
+                Vector2 vector2;
+                if (IsPortalNearby(portalLabel, pickItItem.LabelOnGround))
+                    vector2 = completeItemLabel.GetClientRect().ClickRandom() + _clickWindowOffset;
+                else
+                    vector2 = completeItemLabel.GetClientRect().Center + _clickWindowOffset;
 
                 if (!rectangleOfGameWindow.Intersects(new RectangleF(vector2.X, vector2.Y, 3, 3)))
                 {
