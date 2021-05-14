@@ -78,11 +78,7 @@ namespace PickIt
                     return;
                 }
 
-                IsTargeted = () =>
-                {
-                    var isTargeted = itemItemOnGround.GetComponent<Targetable>()?.isTargeted;
-                    return isTargeted != null && (bool)isTargeted;
-                };
+                IsTargeted = () => itemItemOnGround?.GetComponent<Targetable>()?.isTargeted == true;
 
                 var baseItemType = fs.BaseItemTypes.Translate(Path);
 
@@ -190,6 +186,7 @@ namespace PickIt
         public bool IsFractured { get; }
         public int Weight { get; set; }
         public bool IsMetaItem { get; set; }
+
 
         public override string ToString()
         {
