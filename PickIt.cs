@@ -85,7 +85,6 @@ namespace PickIt
             Core.ParallelRunner.Run(pickItCoroutine);
             pickItCoroutine.Pause();
             DebugTimer.Reset();
-            Settings.MouseSpeed.OnValueChanged += (sender, f) => { Mouse.speedMouse = Settings.MouseSpeed.Value; };
             _workCoroutine = new WaitTime(Settings.ExtraDelay);
             Settings.ExtraDelay.OnValueChanged += (sender, i) => _workCoroutine = new WaitTime(i);
             LoadRuleFiles();
@@ -710,7 +709,6 @@ namespace PickIt
             var centerOfItemLabel = pickItItem.LabelOnGround.Label.GetClientRectCache.Center;
             var rectangleOfGameWindow = GameController.Window.GetWindowRectangleTimeCache;
 
-            var oldMousePosition = Mouse.GetCursorPositionVector();
             _clickWindowOffset = rectangleOfGameWindow.TopLeft;
             rectangleOfGameWindow.Inflate(-36, -36);
             centerOfItemLabel.X += rectangleOfGameWindow.Left;
@@ -757,7 +755,7 @@ namespace PickIt
                     yield break;
                 }
 
-                Mouse.MoveCursorToPosition(vector2);
+                Input.SetCursorPos(vector2);
                 yield return wait2ms;
 
                 if (pickItItem.IsTargeted())
@@ -768,12 +766,12 @@ namespace PickIt
                         yield return new WaitTime(25);
                         if (IsPortalNearby(portalLabel, pickItItem.LabelOnGround) && !IsPortalTargeted(portalLabel))
                         {
-                            yield return Mouse.LeftClick();
+                            Input.Click(MouseButtons.Left);
                         }
                     }
                     else if (!IsPortalNearby(portalLabel, pickItItem.LabelOnGround))
                     {
-                        yield return Mouse.LeftClick();
+                        Input.Click(MouseButtons.Left);
                     }
                 }
 

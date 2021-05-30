@@ -96,7 +96,6 @@
     <Compile Include="FullRareSetManager.cs" />
     <Compile Include="ImGuiExtension.cs" />
     <Compile Include="Misc.cs" />
-    <Compile Include="Mouse.cs" />
     <Compile Include="PickIt.cs" />
     <Compile Include="PickItSettings.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
