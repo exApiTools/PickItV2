@@ -4,7 +4,6 @@ using System.Diagnostics;
 using System.Linq;
 using System.Windows.Forms;
 using ExileCore;
-using ExileCore.PoEMemory;
 using ExileCore.PoEMemory.Components;
 using ExileCore.PoEMemory.Elements;
 using ExileCore.PoEMemory.MemoryObjects;
@@ -20,8 +19,6 @@ namespace PickIt
 {
     public class PickIt : BaseSettingsPlugin<PickItSettings>
     {
-        private readonly List<Entity> _entities = new List<Entity>();
-        private readonly Stopwatch _pickUpTimer = Stopwatch.StartNew();
         private readonly Stopwatch DebugTimer = Stopwatch.StartNew();
         private readonly WaitTime toPick = new WaitTime(1);
         private readonly WaitTime wait1ms = new WaitTime(1);
@@ -207,10 +204,6 @@ namespace PickIt
                     yield break;
                 }
 
-                //while (GameController.Player.GetComponent<Actor>().isMoving)
-                //{
-                //    yield return waitPlayerMove;
-                //}
                 Vector2 vector2;
                 if (IsPortalNearby(portalLabel, pickItItem.LabelOnGround))
                     vector2 = completeItemLabel.GetClientRect().ClickRandom() + _clickWindowOffset;
@@ -229,7 +222,7 @@ namespace PickIt
 
                 if (pickItItem.IsTargeted())
                 {
-                    // in case of portal nearby do 3 checks with delays
+                    // in case of portal nearby do extra checks with delays
                     if (IsPortalNearby(portalLabel, pickItItem.LabelOnGround) && !IsPortalTargeted(portalLabel))
                     {
                         yield return new WaitTime(25);
@@ -251,27 +244,12 @@ namespace PickIt
             while (GameController.Game.IngameState.IngameUi.ItemsOnGroundLabelsVisible.FirstOrDefault(
                 x => x.Address == pickItItem.LabelOnGround.Address) != null && tryCount < 6)
                 tryCount++;
-            //yield return waitForNextTry;
-
-            //yield return waitForNextTry;
-
-            //   Mouse.MoveCursorToPosition(oldMousePosition);
         }
 
         private bool IsPortalTargeted(LabelOnGround portalLabel)
         {
-            // extra checks in case of HUD/game update. They are easy on CPU
             return
-                GameController.IngameState.UIHover.Address == portalLabel.Address ||
-                GameController.IngameState.UIHover.Address == portalLabel.ItemOnGround.Address ||
-                GameController.IngameState.UIHover.Address == portalLabel.Label.Address ||
-                GameController.IngameState.UIHoverElement.Address == portalLabel.Address ||
-                GameController.IngameState.UIHoverElement.Address == portalLabel.ItemOnGround.Address ||
-                GameController.IngameState.UIHoverElement.Address ==
-                portalLabel.Label.Address || // this is the right one
-                GameController.IngameState.UIHoverTooltip.Address == portalLabel.Address ||
-                GameController.IngameState.UIHoverTooltip.Address == portalLabel.ItemOnGround.Address ||
-                GameController.IngameState.UIHoverTooltip.Address == portalLabel.Label.Address ||
+                GameController.IngameState.UIHoverElement.Address == portalLabel.Label.Address || // this is the right one
                 portalLabel?.ItemOnGround?.HasComponent<Targetable>() == true &&
                 portalLabel?.ItemOnGround?.GetComponent<Targetable>()?.isTargeted == true;
         }
