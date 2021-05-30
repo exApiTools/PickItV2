@@ -8,6 +8,7 @@ using ExileCore.PoEMemory.Components;
 using ExileCore.PoEMemory.Elements;
 using ExileCore.PoEMemory.MemoryObjects;
 using ExileCore.Shared;
+using ExileCore.Shared.Cache;
 using ExileCore.Shared.Helpers;
 using Random_Features.Libs;
 using SharpDX;
@@ -38,9 +39,12 @@ namespace PickIt
         public int[,] inventorySlots { get; set; } = new int[0, 0];
         public ServerInventory InventoryItems { get; set; }
         public static PickIt Controller { get; set; }
+        private TimeCache<List<CustomItem>> _currentLabels;
 
         public override bool Initialise()
         {
+            _currentLabels = new TimeCache<List<CustomItem>>(UpdateCurrentLabels, 500);
+            
             #region Register keys
 
             Settings.PickUpKey.OnValueChanged += () => Input.RegisterKey(Settings.PickUpKey);
@@ -132,16 +136,12 @@ namespace PickIt
             if (eventId == "end_pick_it") _enabled = false;
         }
 
-        private IEnumerator FindItemToPick()
+        private List<CustomItem> UpdateCurrentLabels()
         {
-            if (!GameController.Window.IsForeground()) yield break;
-            var portalLabel = GetLabel(@"Metadata/MiscellaneousObjects/MultiplexPortal");
+            const string morphPath = "Metadata/MiscellaneousObjects/Metamorphosis/MetamorphosisMonsterMarker";
             var window = GameController.Window.GetWindowRectangleTimeCache;
             var rect = new RectangleF(window.X, window.X, window.X + window.Width, window.Y + window.Height);
-
-            List<CustomItem> currentLabels;
-            var morphPath = "Metadata/MiscellaneousObjects/Metamorphosis/MetamorphosisMonsterMarker";
-            currentLabels = GameController.Game.IngameState.IngameUi.ItemsOnGroundLabelsVisible
+            var labels = GameController.Game.IngameState.IngameUi.ItemsOnGroundLabelsVisible
                 .Where(x => x.Address != 0 &&
                     x.ItemOnGround?.Path != null &&
                     x.IsVisible && x.Label.GetClientRectCache.Center.PointInRectangle(rect) &&
@@ -149,15 +149,19 @@ namespace PickIt
                 .Select(x => new CustomItem(x, GameController.Files,
                     x.ItemOnGround.DistancePlayer, _weightsRules, x.ItemOnGround?.Path == morphPath))
                 .OrderBy(x => x.Distance).ToList();
-
-            GameController.Debug["PickIt"] = currentLabels;
+            return labels;
+        }
+        
+        private IEnumerator FindItemToPick()
+        {
+            if (!GameController.Window.IsForeground()) yield break;
+            var portalLabel = GetLabel(@"Metadata/MiscellaneousObjects/MultiplexPortal");
             var rectangleOfGameWindow = GameController.Window.GetWindowRectangleTimeCache;
             rectangleOfGameWindow.Inflate(-36, -36);
-            var pickUpThisItem = currentLabels.FirstOrDefault(x =>
+            var pickUpThisItem = _currentLabels.Value.FirstOrDefault(x =>
                 x.Distance < Settings.PickupRange && x.GroundItem != null &&
                 rectangleOfGameWindow.Intersects(new RectangleF(x.LabelOnGround.Label.GetClientRectCache.Center.X,
                     x.LabelOnGround.Label.GetClientRectCache.Center.Y, 3, 3)) && Misc.CanFitInventory(x));
-
             if (_enabled || Input.GetKeyState(Settings.PickUpKey.Value))
             {
                 yield return TryToPickV2(pickUpThisItem, portalLabel);
