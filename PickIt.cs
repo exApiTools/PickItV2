@@ -33,9 +33,7 @@ namespace PickIt
         private readonly Dictionary<string, int> _weightsRules = new Dictionary<string, int>();
         private WaitTime _workCoroutine;
         private uint coroutineCounter;
-        private Vector2 cursorBeforePickIt;
         private bool FullWork = true;
-        private Element LastLabelClick;
         private WaitTime mainWorkCoroutine = new WaitTime(5);
         private Coroutine pickItCoroutine;
         private WaitTime tryToPick = new WaitTime(7);

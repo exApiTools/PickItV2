@@ -134,7 +134,6 @@ namespace PickIt
                     Rarity = mods.ItemRarity;
                     IsIdentified = mods.Identified;
                     ItemLevel = mods.ItemLevel;
-                    IsFractured = mods.HaveFractured;
                     IsVeiled = mods.ItemMods.Any(m => m.DisplayName.Contains("Veil"));
                 }
 
@@ -180,7 +179,6 @@ namespace PickIt
         public ItemRarity Rarity { get; }
         public int Sockets { get; }
         public int Width { get; }
-        public bool IsFractured { get; }
         public int Weight { get; set; }
         public bool IsMetaItem { get; set; }
 
