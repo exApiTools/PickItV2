@@ -80,7 +80,6 @@ namespace PickIt
             MouseSpeed = new RangeNode<float>(1, 0, 30);
         }
 
-        public ToggleNode Enable { get; set; }   
         public HotkeyNode PickUpKey { get; set; }
         public RangeNode<int> PickupRange { get; set; }
         public RangeNode<int> ChestRange { get; set; }
@@ -150,9 +149,11 @@ namespace PickIt
         public string UniqueRuleFile { get; set; }
         public string WeightRuleFile { get; set; }
         public string IgnoreRuleFile { get; set; }
-        public Vector2 InventorySlotsVector2 { get; set; } = new Vector2(0,0);
+        public Vector2 InventorySlotsVector2 { get; set; } = new Vector2(0, 0);
         public RangeNode<float> MouseSpeed { get; set; }
         public ToggleNode ReturnMouseToBeforeClickPosition { get; set; } = new ToggleNode(true);
         public RangeNode<int> TimeBeforeNewClick { get; set; } = new RangeNode<int>(500, 0, 1500);
+
+        public ToggleNode Enable { get; set; }
     }
 }

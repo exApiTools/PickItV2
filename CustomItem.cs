@@ -16,7 +16,8 @@ namespace PickIt
         public Func<bool> IsTargeted;
         public bool IsValid;
 
-        public CustomItem(LabelOnGround item, FilesContainer fs, float distance, Dictionary<string, int> weightsRules, bool isMetamorphItem = false)
+        public CustomItem(LabelOnGround item, FilesContainer fs, float distance, Dictionary<string, int> weightsRules,
+            bool isMetamorphItem = false)
         {
             if (isMetamorphItem)
             {
@@ -41,7 +42,7 @@ namespace PickIt
                 IsTargeted = () =>
                 {
                     var isTargeted = itemItemOnGround.GetComponent<Targetable>()?.isTargeted;
-                    return isTargeted != null && (bool)isTargeted;
+                    return isTargeted != null && (bool) isTargeted;
                 };
 
                 var baseItemType = fs.BaseItemTypes.Translate(Path);
@@ -145,15 +146,11 @@ namespace PickIt
                     LargestLink = sockets.LargestLinkSize;
                 }
 
-                if (GroundItem.HasComponent<Weapon>())
-                {
-                    IsWeapon = true;
-                }
+                if (GroundItem.HasComponent<Weapon>()) IsWeapon = true;
 
                 MapTier = GroundItem.HasComponent<Map>() ? GroundItem.GetComponent<Map>().Tier : 0;
                 IsValid = true;
             }
-
         }
 
         public string BaseName { get; } = "";
@@ -162,7 +159,7 @@ namespace PickIt
         public float Distance { get; }
         public Entity GroundItem { get; }
 
-        public MinimapIcon WorldIcon { get;}
+        public MinimapIcon WorldIcon { get; }
         public int Height { get; }
         public bool IsElder { get; }
         public bool IsIdentified { get; }
