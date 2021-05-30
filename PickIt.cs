@@ -1,9 +1,15 @@
-﻿using ExileCore;
+﻿using System.Collections;
+using System.Collections.Generic;
+using System.Diagnostics;
+using System.Linq;
+using System.Windows.Forms;
+using ExileCore;
 using ExileCore.PoEMemory;
 using ExileCore.PoEMemory.Components;
+using ExileCore.PoEMemory.Elements;
 using ExileCore.PoEMemory.MemoryObjects;
 using ExileCore.Shared;
-using ExileCore.Shared.Enums;
+using ExileCore.Shared.Cache;
 using ExileCore.Shared.Helpers;
 using ImGuiNET;
 using Random_Features.Libs;
@@ -19,6 +25,7 @@ using ExileCore.PoEMemory.Elements;
 using Newtonsoft.Json;
 using Input = ExileCore.Input;
 using nuVector2 = System.Numerics.Vector2;
+using ExileCore.Shared.Enums;
 // ReSharper disable ConstantConditionalAccessQualifier
 
 namespace PickIt
@@ -61,6 +68,7 @@ namespace PickIt
         public ServerInventory InventoryItems { get; set; }
         public static PickIt Controller { get; set; }
         public FRSetManagerPublishInformation FullRareSetManagerData = new FRSetManagerPublishInformation();
+        private TimeCache<List<CustomItem>> _currentLabels;
         private bool _enabled;
 
         public PickIt()
@@ -73,6 +81,8 @@ namespace PickIt
 
         public override bool Initialise()
         {
+            _currentLabels = new TimeCache<List<CustomItem>>(UpdateCurrentLabels, 500);
+            
             #region Register keys
 
             Settings.PickUpKey.OnValueChanged += () => Input.RegisterKey(Settings.PickUpKey);
@@ -322,7 +332,8 @@ namespace PickIt
 
                 if (pickItCoroutine.IsDone)
                 {
-                    var firstOrDefault = Core.ParallelRunner.Coroutines.FirstOrDefault(x => x.OwnerName == nameof(PickIt));
+                    var firstOrDefault =
+                        Core.ParallelRunner.Coroutines.FirstOrDefault(x => x.OwnerName == nameof(PickIt));
 
                     if (firstOrDefault != null)
                         pickItCoroutine = firstOrDefault;
@@ -670,67 +681,57 @@ namespace PickIt
         }
         public override void ReceiveEvent(string eventId, object args)
         {
-            if (eventId == "start_pick_it")
-            {
-                _enabled = true;
-            }
-            if (eventId == "end_pick_it")
-            {
-                _enabled = false;
-            }
+            if (eventId == "start_pick_it") _enabled = true;
+            if (eventId == "end_pick_it") _enabled = false;
             
             if (!Settings.Enable.Value) return;
 
             if (eventId == "frsm_display_data")
             {
-
                 var argSerialised = JsonConvert.SerializeObject(args);
                 FullRareSetManagerData = JsonConvert.DeserializeObject<FRSetManagerPublishInformation>(argSerialised);
             }
         }
 
-        private IEnumerator FindItemToPick()
+        private List<CustomItem> UpdateCurrentLabels()
         {
-            if (!GameController.Window.IsForeground()) yield break;
-            var portalLabel = GetLabel(@"Metadata/MiscellaneousObjects/MultiplexPortal");
+            const string morphPath = "Metadata/MiscellaneousObjects/Metamorphosis/MetamorphosisMonsterMarker";
             var window = GameController.Window.GetWindowRectangleTimeCache;
             var rect = new RectangleF(window.X, window.X, window.X + window.Width, window.Y + window.Height);
-            var playerPos = GameController.Player.GridPos;
-
-            List<CustomItem> currentLabels;
-            var morphPath = "Metadata/MiscellaneousObjects/Metamorphosis/MetamorphosisMonsterMarker";
+            var labels = GameController.Game.IngameState.IngameUi.ItemsOnGroundLabelsVisible;
 
             if (Settings.UseWeight)
             {
-                currentLabels = GameController.Game.IngameState.IngameUi.ItemsOnGroundLabelsVisible
-                    .Where(x => x.Address != 0 &&
-                                x.ItemOnGround?.Path != null &&
-                                x.IsVisible && x.Label.GetClientRectCache.Center.PointInRectangle(rect) &&
-                                x.CanPickUp && (x.MaxTimeForPickUp.TotalSeconds <= 0) || x.ItemOnGround?.Path == morphPath)
-                    .Select(x => new CustomItem(x, GameController.Files,
-                        x.ItemOnGround.DistancePlayer, _weightsRules, x.ItemOnGround?.Path == morphPath))
+                return labels.Where(x => x.Address != 0 && x.ItemOnGround?.Path != null && x.IsVisible
+                             && x.Label.GetClientRectCache.Center.PointInRectangle(rect)
+                             && x.CanPickUp
+                             && (x.MaxTimeForPickUp.TotalSeconds <= 0) || x.ItemOnGround?.Path == morphPath)
+                    .Select(x => new CustomItem(x, GameController.Files, x.ItemOnGround.DistancePlayer,
+                            _weightsRules, x.ItemOnGround?.Path == morphPath))
                     .OrderByDescending(x => x.Weight).ThenBy(x => x.Distance).ToList();
             }
             else
             {
-                currentLabels = GameController.Game.IngameState.IngameUi.ItemsOnGroundLabelsVisible
-                    .Where(x => x.Address != 0 &&
-                                x.ItemOnGround?.Path != null &&
-                                x.IsVisible && x.Label.GetClientRectCache.Center.PointInRectangle(rect) &&
-                                x.CanPickUp && (x.MaxTimeForPickUp.TotalSeconds <= 0) || x.ItemOnGround?.Path == morphPath)
-                    .Select(x => new CustomItem(x, GameController.Files,
-                        x.ItemOnGround.DistancePlayer, _weightsRules, x.ItemOnGround?.Path == morphPath))
+                return labels.Where(x => x.Address != 0 && x.ItemOnGround?.Path != null && x.IsVisible
+                             && x.Label.GetClientRectCache.Center.PointInRectangle(rect)
+                             && x.CanPickUp
+                             && (x.MaxTimeForPickUp.TotalSeconds <= 0) || x.ItemOnGround?.Path == morphPath)
+                    .Select(x => new CustomItem(x, GameController.Files, x.ItemOnGround.DistancePlayer,
+                            _weightsRules, x.ItemOnGround?.Path == morphPath))
                     .OrderBy(x => x.Distance).ToList();
             }
-
-            GameController.Debug["PickIt"] = currentLabels;
+        }
+        
+        private IEnumerator FindItemToPick()
+        {
+            if (!GameController.Window.IsForeground()) yield break;
+            var portalLabel = GetLabel(@"Metadata/MiscellaneousObjects/MultiplexPortal");
             var rectangleOfGameWindow = GameController.Window.GetWindowRectangleTimeCache;
             rectangleOfGameWindow.Inflate(-36, -36);
-            var pickUpThisItem = currentLabels.FirstOrDefault(x =>
+            var pickUpThisItem = _currentLabels.Value.FirstOrDefault(x =>
                 DoWePickThis(x) && x.Distance < Settings.PickupRange && x.GroundItem != null &&
                 rectangleOfGameWindow.Intersects(new RectangleF(x.LabelOnGround.Label.GetClientRectCache.Center.X + rectangleOfGameWindow.X,
                     x.LabelOnGround.Label.GetClientRectCache.Center.Y, 3, 3)) && Misc.CanFitInventory(x));
-            
             if (_enabled ||
                 Input.GetKeyState(Settings.PickUpKey.Value) ||
                 CanLazyLoot() && ShouldLazyLoot(pickUpThisItem))
@@ -834,23 +835,21 @@ namespace PickIt
                     yield break;
                 }
 
-                Mouse.MoveCursorToPosition(vector2);
+                Input.SetCursorPos(vector2);
                 yield return wait2ms;
 
                 if (pickItItem.IsTargeted())
                 {
-                    // in case of portal nearby do 3 checks with delays
+                    // in case of portal nearby do extra checks with delays
                     if (IsPortalNearby(portalLabel, pickItItem.LabelOnGround) && !IsPortalTargeted(portalLabel))
                     {
                         yield return new WaitTime(25);
                         if (IsPortalNearby(portalLabel, pickItItem.LabelOnGround) && !IsPortalTargeted(portalLabel))
-                        {
-                            yield return Mouse.LeftClick();
-                        }
+                            Input.Click(MouseButtons.Left);
                     }
                     else if (!IsPortalNearby(portalLabel, pickItItem.LabelOnGround))
                     {
-                        yield return Mouse.LeftClick();
+                        Input.Click(MouseButtons.Left);
                     }
                 }
 
@@ -861,15 +860,8 @@ namespace PickIt
             tryCount = 0;
 
             while (GameController.Game.IngameState.IngameUi.ItemsOnGroundLabelsVisible.FirstOrDefault(
-                       x => x.Address == pickItItem.LabelOnGround.Address) != null && tryCount < 6)
-            {
+                x => x.Address == pickItItem.LabelOnGround.Address) != null && tryCount < 6)
                 tryCount++;
-                //yield return waitForNextTry;
-            }
-
-            //yield return waitForNextTry;
-
-            //   Mouse.MoveCursorToPosition(oldMousePosition);
         }
 
         private bool IsPortalTargeted(LabelOnGround portalLabel)
