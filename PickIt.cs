@@ -78,20 +78,10 @@ namespace PickIt
 
         public override void DrawSettings()
         {
-            Settings.PickUpKey =
-                ImGuiExtension.HotkeySelector("Pickup Key: " + Settings.PickUpKey.Value, Settings.PickUpKey);
-            Settings.LeftClickToggleNode.Value = ImGuiExtension.Checkbox(
-                "Mouse Button: " + (Settings.LeftClickToggleNode ? "Left" : "Right"), Settings.LeftClickToggleNode);
-            Settings.LeftClickToggleNode.Value = ImGuiExtension.Checkbox("Return Mouse To Position Before Click",
-                Settings.ReturnMouseToBeforeClickPosition);
-            Settings.GroundChests.Value =
-                ImGuiExtension.Checkbox("Click Chests If No Items Around", Settings.GroundChests);
+            Settings.PickUpKey = ImGuiExtension.HotkeySelector("Pickup Key: " + Settings.PickUpKey.Value, Settings.PickUpKey);
             Settings.PickupRange.Value = ImGuiExtension.IntSlider("Pickup Radius", Settings.PickupRange);
-            Settings.ChestRange.Value = ImGuiExtension.IntSlider("Chest Radius", Settings.ChestRange);
             Settings.ExtraDelay.Value = ImGuiExtension.IntSlider("Extra Click Delay", Settings.ExtraDelay);
-            Settings.MouseSpeed.Value = ImGuiExtension.FloatSlider("Mouse speed", Settings.MouseSpeed);
-            Settings.TimeBeforeNewClick.Value =
-                ImGuiExtension.IntSlider("Time wait for new click", Settings.TimeBeforeNewClick);
+            Settings.TimeBeforeNewClick.Value = ImGuiExtension.IntSlider("Time wait for new click", Settings.TimeBeforeNewClick);
         }
 
         public override Job Tick()
