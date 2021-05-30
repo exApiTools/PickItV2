@@ -150,29 +150,9 @@ namespace PickIt
         public string UniqueRuleFile { get; set; }
         public string WeightRuleFile { get; set; }
         public string IgnoreRuleFile { get; set; }
-        public ToggleNode MoveInventoryView { get; set; } = new ToggleNode(false);
-        public ToggleNode ShowInventoryView { get; set; } = new ToggleNode(true);
         public Vector2 InventorySlotsVector2 { get; set; } = new Vector2(0,0);
         public RangeNode<float> MouseSpeed { get; set; }
         public ToggleNode ReturnMouseToBeforeClickPosition { get; set; } = new ToggleNode(true);
         public RangeNode<int> TimeBeforeNewClick { get; set; } = new RangeNode<int>(500, 0, 1500);
-
-        public ToggleNode FullRareSetManagerOverride { get; set; } = new ToggleNode(false);
-        public FRSMOverrides FullRareSetManagerPickupOverrides { get; set; } = new FRSMOverrides();
-
-        public class FRSMOverrides
-        {
-            public int Weapons { get; set; } = -1;
-            public int Helmets { get; set; } = -1;
-            public int BodyArmors { get; set; } = -1;
-            public int Gloves { get; set; } = -1;
-            public int Boots { get; set; } = -1;
-            public int Belts { get; set; } = -1;
-            public int Amulets { get; set; } = -1;
-            public int Rings { get; set; } = -1;
-
-            public int MinItemLevel { get; set; } = 60;
-            public int MaxItemLevel { get; set; } = 74;
-        }
     }
 }
