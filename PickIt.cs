@@ -19,28 +19,22 @@ namespace PickIt
 {
     public class PickIt : BaseSettingsPlugin<PickItSettings>
     {
-        private readonly Stopwatch DebugTimer = Stopwatch.StartNew();
-        private readonly WaitTime toPick = new WaitTime(1);
-        private readonly WaitTime wait1ms = new WaitTime(1);
-        private readonly WaitTime wait2ms = new WaitTime(2);
-        private readonly WaitTime wait3ms = new WaitTime(3);
-        private readonly WaitTime waitForNextTry = new WaitTime(1);
+        private readonly Stopwatch _debugTimer = Stopwatch.StartNew();
+        private readonly WaitTime _toPick = new WaitTime(1);
+        private readonly WaitTime _wait2Ms = new WaitTime(2);
         private Vector2 _clickWindowOffset;
         private bool _enabled;
         private readonly Dictionary<string, int> _weightsRules = new Dictionary<string, int>();
         private WaitTime _workCoroutine;
-        private uint coroutineCounter;
-        private bool FullWork = true;
-        private WaitTime mainWorkCoroutine = new WaitTime(5);
-        private Coroutine pickItCoroutine;
-        private WaitTime tryToPick = new WaitTime(7);
-        private WaitTime waitPlayerMove = new WaitTime(10);
+        private uint _coroutineCounter;
+        private bool _fullWork = true;
+        private Coroutine _pickItCoroutine;
         private TimeCache<List<CustomItem>> _currentLabels;
 
         public override bool Initialise()
         {
             _currentLabels = new TimeCache<List<CustomItem>>(UpdateCurrentLabels, 500);
-            
+
             #region Register keys
 
             Settings.PickUpKey.OnValueChanged += () => Input.RegisterKey(Settings.PickUpKey);
@@ -49,10 +43,10 @@ namespace PickIt
 
             #endregion
 
-            pickItCoroutine = new Coroutine(MainWorkCoroutine(), this, "Pick It");
-            Core.ParallelRunner.Run(pickItCoroutine);
-            pickItCoroutine.Pause();
-            DebugTimer.Reset();
+            _pickItCoroutine = new Coroutine(MainWorkCoroutine(), this, "Pick It");
+            Core.ParallelRunner.Run(_pickItCoroutine);
+            _pickItCoroutine.Pause();
+            _debugTimer.Reset();
             _workCoroutine = new WaitTime(Settings.ExtraDelay);
             Settings.ExtraDelay.OnValueChanged += (sender, i) => _workCoroutine = new WaitTime(i);
             return true;
@@ -63,8 +57,8 @@ namespace PickIt
             while (true)
             {
                 yield return FindItemToPick();
-                coroutineCounter++;
-                pickItCoroutine.UpdateTicks(coroutineCounter);
+                _coroutineCounter++;
+                _pickItCoroutine.UpdateTicks(_coroutineCounter);
                 yield return _workCoroutine;
             }
             // ReSharper disable once IteratorNeverReturns
@@ -72,10 +66,12 @@ namespace PickIt
 
         public override void DrawSettings()
         {
-            Settings.PickUpKey = ImGuiExtension.HotkeySelector("Pickup Key: " + Settings.PickUpKey.Value, Settings.PickUpKey);
+            Settings.PickUpKey =
+                ImGuiExtension.HotkeySelector("Pickup Key: " + Settings.PickUpKey.Value, Settings.PickUpKey);
             Settings.PickupRange.Value = ImGuiExtension.IntSlider("Pickup Radius", Settings.PickupRange);
             Settings.ExtraDelay.Value = ImGuiExtension.IntSlider("Extra Click Delay", Settings.ExtraDelay);
-            Settings.TimeBeforeNewClick.Value = ImGuiExtension.IntSlider("Time wait for new click", Settings.TimeBeforeNewClick);
+            Settings.TimeBeforeNewClick.Value =
+                ImGuiExtension.IntSlider("Time wait for new click", Settings.TimeBeforeNewClick);
         }
 
         public override Job Tick()
@@ -83,42 +79,39 @@ namespace PickIt
             if (Input.GetKeyState(Keys.Escape))
             {
                 _enabled = false;
-                pickItCoroutine.Pause();
+                _pickItCoroutine.Pause();
             }
 
             if (_enabled || Input.GetKeyState(Settings.PickUpKey.Value))
             {
-                DebugTimer.Restart();
+                _debugTimer.Restart();
 
-                if (pickItCoroutine.IsDone)
+                if (_pickItCoroutine.IsDone)
                 {
                     var firstOrDefault =
                         Core.ParallelRunner.Coroutines.FirstOrDefault(x => x.OwnerName == nameof(PickIt));
 
                     if (firstOrDefault != null)
-                        pickItCoroutine = firstOrDefault;
+                        _pickItCoroutine = firstOrDefault;
                 }
 
-                pickItCoroutine.Resume();
-                FullWork = false;
+                _pickItCoroutine.Resume();
+                _fullWork = false;
             }
             else
             {
-                if (FullWork)
+                if (_fullWork)
                 {
-                    pickItCoroutine.Pause();
-                    DebugTimer.Reset();
+                    _pickItCoroutine.Pause();
+                    _debugTimer.Reset();
                 }
             }
 
-            if (DebugTimer.ElapsedMilliseconds > 300)
+            if (_debugTimer.ElapsedMilliseconds > 300)
             {
-                FullWork = true;
-                //LogMessage("Error pick it stop after time limit 300 ms", 1);
-                DebugTimer.Reset();
+                _fullWork = true;
+                _debugTimer.Reset();
             }
-            //Graphics.DrawText($@"PICKIT :: Debug Tick Timer ({DebugTimer.ElapsedMilliseconds}ms)", new Vector2(100, 100), FontAlign.Left);
-            //DebugTimer.Reset();
 
             return null;
         }
@@ -144,7 +137,7 @@ namespace PickIt
                 .OrderBy(x => x.Distance).ToList();
             return labels;
         }
-        
+
         private IEnumerator FindItemToPick()
         {
             if (!GameController.Window.IsForeground()) yield break;
@@ -158,7 +151,7 @@ namespace PickIt
             if (_enabled || Input.GetKeyState(Settings.PickUpKey.Value))
             {
                 yield return TryToPickV2(pickUpThisItem, portalLabel);
-                FullWork = true;
+                _fullWork = true;
             }
         }
 
@@ -166,7 +159,7 @@ namespace PickIt
         {
             if (!pickItItem.IsValid)
             {
-                FullWork = true;
+                _fullWork = true;
                 //LogMessage("PickItem is not valid.", 5, Color.Red);
                 yield break;
             }
@@ -180,7 +173,7 @@ namespace PickIt
             centerOfItemLabel.Y += rectangleOfGameWindow.Top;
             if (!rectangleOfGameWindow.Intersects(new RectangleF(centerOfItemLabel.X, centerOfItemLabel.Y, 3, 3)))
             {
-                FullWork = true;
+                _fullWork = true;
                 //LogMessage($"Label outside game window. Label: {centerOfItemLabel} Window: {rectangleOfGameWindow}", 5, Color.Red);
                 yield break;
             }
@@ -209,13 +202,13 @@ namespace PickIt
 
                 if (!rectangleOfGameWindow.Intersects(new RectangleF(vector2.X, vector2.Y, 3, 3)))
                 {
-                    FullWork = true;
+                    _fullWork = true;
                     //LogMessage($"x,y outside game window. Label: {centerOfItemLabel} Window: {rectangleOfGameWindow}", 5, Color.Red);
                     yield break;
                 }
 
                 Input.SetCursorPos(vector2);
-                yield return wait2ms;
+                yield return _wait2Ms;
 
                 if (pickItItem.IsTargeted())
                 {
@@ -232,7 +225,7 @@ namespace PickIt
                     }
                 }
 
-                yield return toPick;
+                yield return _toPick;
                 tryCount++;
             }
 
@@ -245,10 +238,10 @@ namespace PickIt
 
         private bool IsPortalTargeted(LabelOnGround portalLabel)
         {
-            return
-                GameController.IngameState.UIHoverElement.Address == portalLabel.Label.Address || // this is the right one
-                portalLabel?.ItemOnGround?.HasComponent<Targetable>() == true &&
-                portalLabel?.ItemOnGround?.GetComponent<Targetable>()?.isTargeted == true;
+            return GameController.IngameState.UIHoverElement.Address ==
+                   portalLabel.Label.Address || // this is the right one
+                   portalLabel?.ItemOnGround?.HasComponent<Targetable>() == true &&
+                   portalLabel?.ItemOnGround?.GetComponent<Targetable>()?.isTargeted == true;
         }
 
         private bool IsPortalNearby(LabelOnGround portalLabel, LabelOnGround pickItItem)
@@ -283,7 +276,7 @@ namespace PickIt
 
         public override void OnPluginDestroyForHotReload()
         {
-            pickItCoroutine.Done(true);
+            _pickItCoroutine.Done(true);
         }
     }
 }
