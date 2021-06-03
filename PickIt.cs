@@ -30,11 +30,13 @@ namespace PickIt
         private bool _fullWork = true;
         private Coroutine _pickItCoroutine;
         private TimeCache<List<CustomItem>> _currentLabels;
+        private TimeCache<LabelOnGround> _portalLabel;
 
         public override bool Initialise()
         {
             _currentLabels = new TimeCache<List<CustomItem>>(UpdateCurrentLabels, 500);
-
+            _portalLabel = new TimeCache<LabelOnGround>(UpdatePortal, 3000);
+            
             #region Register keys
 
             Settings.PickUpKey.OnValueChanged += () => Input.RegisterKey(Settings.PickUpKey);
@@ -51,6 +53,8 @@ namespace PickIt
             Settings.ExtraDelay.OnValueChanged += (sender, i) => _workCoroutine = new WaitTime(i);
             return true;
         }
+
+        private LabelOnGround UpdatePortal() => GetLabel(@"Metadata/MiscellaneousObjects/MultiplexPortal");
 
         private IEnumerator MainWorkCoroutine()
         {
@@ -141,7 +145,6 @@ namespace PickIt
         private IEnumerator FindItemToPick()
         {
             if (!GameController.Window.IsForeground()) yield break;
-            var portalLabel = GetLabel(@"Metadata/MiscellaneousObjects/MultiplexPortal");
             var rectangleOfGameWindow = GameController.Window.GetWindowRectangleTimeCache;
             rectangleOfGameWindow.Inflate(-36, -36);
             var pickUpThisItem = _currentLabels.Value.FirstOrDefault(x =>
@@ -150,12 +153,12 @@ namespace PickIt
                     x.LabelOnGround.Label.GetClientRectCache.Center.Y, 3, 3)));
             if (_enabled || Input.GetKeyState(Settings.PickUpKey.Value))
             {
-                yield return TryToPickV2(pickUpThisItem, portalLabel);
+                yield return TryToPickV2(pickUpThisItem);
                 _fullWork = true;
             }
         }
 
-        private IEnumerator TryToPickV2(CustomItem pickItItem, LabelOnGround portalLabel)
+        private IEnumerator TryToPickV2(CustomItem pickItItem)
         {
             if (!pickItItem.IsValid)
             {
@@ -195,7 +198,7 @@ namespace PickIt
                 }
 
                 Vector2 vector2;
-                if (IsPortalNearby(portalLabel, pickItItem.LabelOnGround))
+                if (IsPortalNearby(pickItItem.LabelOnGround))
                     vector2 = completeItemLabel.GetClientRect().ClickRandom() + _clickWindowOffset;
                 else
                     vector2 = completeItemLabel.GetClientRect().Center + _clickWindowOffset;
@@ -213,13 +216,13 @@ namespace PickIt
                 if (pickItItem.IsTargeted())
                 {
                     // in case of portal nearby do extra checks with delays
-                    if (IsPortalNearby(portalLabel, pickItItem.LabelOnGround) && !IsPortalTargeted(portalLabel))
+                    if (IsPortalNearby(pickItItem.LabelOnGround) && !IsPortalTargeted())
                     {
                         yield return new WaitTime(25);
-                        if (IsPortalNearby(portalLabel, pickItItem.LabelOnGround) && !IsPortalTargeted(portalLabel))
+                        if (IsPortalNearby(pickItItem.LabelOnGround) && !IsPortalTargeted())
                             Input.Click(MouseButtons.Left);
                     }
-                    else if (!IsPortalNearby(portalLabel, pickItItem.LabelOnGround))
+                    else if (!IsPortalNearby(pickItItem.LabelOnGround))
                     {
                         Input.Click(MouseButtons.Left);
                     }
@@ -236,18 +239,18 @@ namespace PickIt
                 tryCount++;
         }
 
-        private bool IsPortalTargeted(LabelOnGround portalLabel)
+        private bool IsPortalTargeted()
         {
             return GameController.IngameState.UIHoverElement.Address ==
-                   portalLabel.Label.Address || // this is the right one
-                   portalLabel?.ItemOnGround?.HasComponent<Targetable>() == true &&
-                   portalLabel?.ItemOnGround?.GetComponent<Targetable>()?.isTargeted == true;
+                   _portalLabel.Value.Label.Address || // this is the right one
+                   _portalLabel.Value?.ItemOnGround?.HasComponent<Targetable>() == true &&
+                   _portalLabel.Value?.ItemOnGround?.GetComponent<Targetable>()?.isTargeted == true;
         }
 
-        private bool IsPortalNearby(LabelOnGround portalLabel, LabelOnGround pickItItem)
+        private bool IsPortalNearby(LabelOnGround pickItItem)
         {
-            if (portalLabel == null || pickItItem == null) return false;
-            var rect1 = portalLabel.Label.GetClientRectCache;
+            if (_portalLabel == null || pickItItem == null) return false;
+            var rect1 = _portalLabel.Value.Label.GetClientRectCache;
             var rect2 = pickItItem.Label.GetClientRectCache;
             rect1.Inflate(100, 100);
             rect2.Inflate(100, 100);
