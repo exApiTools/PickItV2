@@ -6,7 +6,6 @@ using System.Windows.Forms;
 using ExileCore;
 using ExileCore.PoEMemory.Components;
 using ExileCore.PoEMemory.Elements;
-using ExileCore.PoEMemory.MemoryObjects;
 using ExileCore.Shared;
 using ExileCore.Shared.Cache;
 using ExileCore.Shared.Helpers;
@@ -36,9 +35,6 @@ namespace PickIt
         private Coroutine pickItCoroutine;
         private WaitTime tryToPick = new WaitTime(7);
         private WaitTime waitPlayerMove = new WaitTime(10);
-        public int[,] inventorySlots { get; set; } = new int[0, 0];
-        public ServerInventory InventoryItems { get; set; }
-        public static PickIt Controller { get; set; }
         private TimeCache<List<CustomItem>> _currentLabels;
 
         public override bool Initialise()
@@ -53,7 +49,6 @@ namespace PickIt
 
             #endregion
 
-            Controller = this;
             pickItCoroutine = new Coroutine(MainWorkCoroutine(), this, "Pick It");
             Core.ParallelRunner.Run(pickItCoroutine);
             pickItCoroutine.Pause();
@@ -85,8 +80,6 @@ namespace PickIt
 
         public override Job Tick()
         {
-            InventoryItems = GameController.Game.IngameState.ServerData.PlayerInventories[0].Inventory;
-            inventorySlots = Misc.GetContainer2DArray(InventoryItems);
             if (Input.GetKeyState(Keys.Escape))
             {
                 _enabled = false;
@@ -161,7 +154,7 @@ namespace PickIt
             var pickUpThisItem = _currentLabels.Value.FirstOrDefault(x =>
                 x.Distance < Settings.PickupRange && x.GroundItem != null &&
                 rectangleOfGameWindow.Intersects(new RectangleF(x.LabelOnGround.Label.GetClientRectCache.Center.X,
-                    x.LabelOnGround.Label.GetClientRectCache.Center.Y, 3, 3)) && Misc.CanFitInventory(x));
+                    x.LabelOnGround.Label.GetClientRectCache.Center.Y, 3, 3)));
             if (_enabled || Input.GetKeyState(Settings.PickUpKey.Value))
             {
                 yield return TryToPickV2(pickUpThisItem, portalLabel);
