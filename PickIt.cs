@@ -127,10 +127,13 @@ namespace PickIt
             var window = GameController.Window.GetWindowRectangleTimeCache;
             var rect = new RectangleF(window.X, window.X, window.X + window.Width, window.Y + window.Height);
             var labels = GameController.Game.IngameState.IngameUi.ItemsOnGroundLabelsVisible
-                .Where(x => x.Address != 0 &&
-                    x.ItemOnGround?.Path != null &&
-                    x.IsVisible && x.Label.GetClientRectCache.Center.PointInRectangle(rect) &&
-                    x.CanPickUp && x.MaxTimeForPickUp.TotalSeconds <= 0)
+                .Where(x => x.Address != 0
+                    //&& x.ItemOnGround?.Path != null 
+                    //&& x.IsVisible 
+                    //&& x.Label.GetClientRectCache.Center.PointInRectangle(rect) 
+                    //&& x.CanPickUp 
+                    //&& x.MaxTimeForPickUp.TotalSeconds <= 0
+                    )
                 .Select(x => new CustomItem(x, GameController.Files,
                     x.ItemOnGround.DistancePlayer, _weightsRules))
                 .OrderBy(x => x.Distance).ToList();
