@@ -698,7 +698,7 @@ namespace PickIt
             {
                 return labels.Where(x => x.Address != 0 && x.ItemOnGround?.Path != null && x.IsVisible
                              && x.Label.GetClientRectCache.Center.PointInRectangle(rect)
-                             && x.CanPickUp
+                             // && x.CanPickUp
                              && x.MaxTimeForPickUp.TotalSeconds <= 0)
                     .Select(x => new CustomItem(x, GameController.Files, x.ItemOnGround.DistancePlayer,
                             _weightsRules))
@@ -708,7 +708,7 @@ namespace PickIt
             {
                 return labels.Where(x => x.Address != 0 && x.ItemOnGround?.Path != null && x.IsVisible
                              && x.Label.GetClientRectCache.Center.PointInRectangle(rect)
-                             && x.CanPickUp
+                             // && x.CanPickUp
                              && x.MaxTimeForPickUp.TotalSeconds <= 0)
                     .Select(x => new CustomItem(x, GameController.Files, x.ItemOnGround.DistancePlayer,
                             _weightsRules))
