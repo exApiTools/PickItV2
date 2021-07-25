@@ -37,11 +37,8 @@ namespace PickIt
         private readonly List<Entity> _entities = new List<Entity>();
         private readonly Stopwatch _pickUpTimer = Stopwatch.StartNew();
         private readonly Stopwatch DebugTimer = Stopwatch.StartNew();
-        private readonly WaitTime toPick = new WaitTime(1);
-        private readonly WaitTime wait1ms = new WaitTime(1);
-        private readonly WaitTime wait2ms = new WaitTime(2);
-        private readonly WaitTime wait3ms = new WaitTime(3);
-        private readonly WaitTime waitForNextTry = new WaitTime(1);
+        private readonly WaitTime _toPick = new WaitTime(1);
+        private readonly WaitTime _wait2Ms = new WaitTime(2);
         private Vector2 _clickWindowOffset;
         private HashSet<string> _magicRules;
         private HashSet<string> _normalRules;
@@ -52,9 +49,7 @@ namespace PickIt
         private WaitTime _workCoroutine;
         public DateTime buildDate;
         private uint coroutineCounter;
-        private Vector2 cursorBeforePickIt;
-        private bool FullWork = true;
-        private Element LastLabelClick;
+        private bool _fullWork = true;
         public string MagicRuleFile;
         private WaitTime mainWorkCoroutine = new WaitTime(5);
         public string NormalRuleFile;
@@ -340,11 +335,11 @@ namespace PickIt
                 }
 
                 pickItCoroutine.Resume();
-                FullWork = false;
+                _fullWork = false;
             }
             else
             {
-                if (FullWork)
+                if (_fullWork)
                 {
                     pickItCoroutine.Pause();
                     DebugTimer.Reset();
@@ -353,7 +348,7 @@ namespace PickIt
 
             if (DebugTimer.ElapsedMilliseconds > 300)
             {
-                FullWork = true;
+                _fullWork = true;
                 //LogMessage("Error pick it stop after time limit 300 ms", 1);
                 DebugTimer.Reset();
             }
@@ -695,7 +690,6 @@ namespace PickIt
 
         private List<CustomItem> UpdateCurrentLabels()
         {
-            const string morphPath = "Metadata/MiscellaneousObjects/Metamorphosis/MetamorphosisMonsterMarker";
             var window = GameController.Window.GetWindowRectangleTimeCache;
             var rect = new RectangleF(window.X, window.X, window.X + window.Width, window.Y + window.Height);
             var labels = GameController.Game.IngameState.IngameUi.ItemsOnGroundLabelsVisible;
@@ -705,9 +699,9 @@ namespace PickIt
                 return labels.Where(x => x.Address != 0 && x.ItemOnGround?.Path != null && x.IsVisible
                              && x.Label.GetClientRectCache.Center.PointInRectangle(rect)
                              && x.CanPickUp
-                             && (x.MaxTimeForPickUp.TotalSeconds <= 0) || x.ItemOnGround?.Path == morphPath)
+                             && x.MaxTimeForPickUp.TotalSeconds <= 0)
                     .Select(x => new CustomItem(x, GameController.Files, x.ItemOnGround.DistancePlayer,
-                            _weightsRules, x.ItemOnGround?.Path == morphPath))
+                            _weightsRules))
                     .OrderByDescending(x => x.Weight).ThenBy(x => x.Distance).ToList();
             }
             else
@@ -715,9 +709,9 @@ namespace PickIt
                 return labels.Where(x => x.Address != 0 && x.ItemOnGround?.Path != null && x.IsVisible
                              && x.Label.GetClientRectCache.Center.PointInRectangle(rect)
                              && x.CanPickUp
-                             && (x.MaxTimeForPickUp.TotalSeconds <= 0) || x.ItemOnGround?.Path == morphPath)
+                             && x.MaxTimeForPickUp.TotalSeconds <= 0)
                     .Select(x => new CustomItem(x, GameController.Files, x.ItemOnGround.DistancePlayer,
-                            _weightsRules, x.ItemOnGround?.Path == morphPath))
+                            _weightsRules))
                     .OrderBy(x => x.Distance).ToList();
             }
         }
@@ -737,7 +731,7 @@ namespace PickIt
                 CanLazyLoot() && ShouldLazyLoot(pickUpThisItem))
             {
                 yield return TryToPickV2(pickUpThisItem, portalLabel);
-                FullWork = true;
+                _fullWork = true;
             }
         }
         
@@ -780,7 +774,7 @@ namespace PickIt
         {
             if (!pickItItem.IsValid)
             {
-                FullWork = true;
+                _fullWork = true;
                 //LogMessage("PickItem is not valid.", 5, Color.Red);
                 yield break;
             }
@@ -788,14 +782,13 @@ namespace PickIt
             var centerOfItemLabel = pickItItem.LabelOnGround.Label.GetClientRectCache.Center;
             var rectangleOfGameWindow = GameController.Window.GetWindowRectangleTimeCache;
 
-            var oldMousePosition = Mouse.GetCursorPositionVector();
             _clickWindowOffset = rectangleOfGameWindow.TopLeft;
             rectangleOfGameWindow.Inflate(-36, -36);
             centerOfItemLabel.X += rectangleOfGameWindow.Left;
             centerOfItemLabel.Y += rectangleOfGameWindow.Top;
             if (!rectangleOfGameWindow.Intersects(new RectangleF(centerOfItemLabel.X, centerOfItemLabel.Y, 3, 3)))
             {
-                FullWork = true;
+                _fullWork = true;
                 //LogMessage($"Label outside game window. Label: {centerOfItemLabel} Window: {rectangleOfGameWindow}", 5, Color.Red);
                 yield break;
             }
@@ -830,13 +823,13 @@ namespace PickIt
 
                 if (!rectangleOfGameWindow.Intersects(new RectangleF(vector2.X, vector2.Y, 3, 3)))
                 {
-                    FullWork = true;
+                    _fullWork = true;
                     //LogMessage($"x,y outside game window. Label: {centerOfItemLabel} Window: {rectangleOfGameWindow}", 5, Color.Red);
                     yield break;
                 }
 
                 Input.SetCursorPos(vector2);
-                yield return wait2ms;
+                yield return _wait2Ms;
 
                 if (pickItItem.IsTargeted())
                 {
@@ -853,7 +846,7 @@ namespace PickIt
                     }
                 }
 
-                yield return toPick;
+                yield return _toPick;
                 tryCount++;
             }
 
@@ -866,19 +859,10 @@ namespace PickIt
 
         private bool IsPortalTargeted(LabelOnGround portalLabel)
         {
-            // extra checks in case of HUD/game update. They are easy on CPU
-            return
-                GameController.IngameState.UIHover.Address == portalLabel.Address ||
-                GameController.IngameState.UIHover.Address == portalLabel.ItemOnGround.Address ||
-                GameController.IngameState.UIHover.Address == portalLabel.Label.Address || 
-                GameController.IngameState.UIHoverElement.Address == portalLabel.Address ||
-                GameController.IngameState.UIHoverElement.Address == portalLabel.ItemOnGround.Address ||
-                GameController.IngameState.UIHoverElement.Address == portalLabel.Label.Address || // this is the right one
-                GameController.IngameState.UIHoverTooltip.Address == portalLabel.Address ||
-                GameController.IngameState.UIHoverTooltip.Address == portalLabel.ItemOnGround.Address ||
-                GameController.IngameState.UIHoverTooltip.Address == portalLabel.Label.Address ||
-                portalLabel?.ItemOnGround?.HasComponent<Targetable>() == true &&
-                portalLabel?.ItemOnGround?.GetComponent<Targetable>()?.isTargeted == true;
+            return GameController.IngameState.UIHoverElement.Address ==
+                   portalLabel.Label.Address || // this is the right one
+                   portalLabel?.ItemOnGround?.HasComponent<Targetable>() == true &&
+                   portalLabel?.ItemOnGround?.GetComponent<Targetable>()?.isTargeted == true;
         }
 
         private bool IsPortalNearby(LabelOnGround portalLabel, LabelOnGround pickItItem)
