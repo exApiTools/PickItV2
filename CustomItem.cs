@@ -26,11 +26,65 @@ namespace PickIt
             var groundItem = worldItem.ItemEntity;
             GroundItem = groundItem;
             if (GroundItem == null) return;
+
+            Quality = (int)GroundItem.GetComponent<Quality>()?.ItemQuality;
             IsTargeted = () => itemItemOnGround?.GetComponent<Targetable>()?.isTargeted == true;
             IsValid = true;
+
+            var mods = GroundItem.GetComponent<Mods>();
+            if (mods != null)
+            {
+                IsVeiled = (bool)mods.ItemMods?.Any(m => m.DisplayName.Contains("Veil"));
+                IsFractured = mods.HaveFractured;
+            }
+
+            var sockets = GroundItem.GetComponent<Sockets>();
+            if (sockets != null)
+            {
+                IsRGB = sockets.IsRGB;
+                Sockets = sockets.NumberOfSockets;
+                LargestLink = sockets.LargestLinkSize;
+            }
+
+            var @base = GroundItem.GetComponent<Base>();
+            if (@base != null)
+            {
+                IsElder = @base.isElder;
+                IsShaper = @base.isShaper;
+                IsHunter = @base.isHunter;
+                IsRedeemer = @base.isRedeemer;
+                IsCrusader = @base.isCrusader;
+                IsWarlord = @base.isWarlord;
+            }
+
+            var path = GroundItem.Path;
+            var baseItemType = fs.BaseItemTypes.Translate(path);
+            if (baseItemType != null)
+            {
+                BaseName = baseItemType.BaseName;
+                ClassName = baseItemType.ClassName;
+                Width = baseItemType.Width;
+                Height = baseItemType.Height;
+            }
         }
         public LabelOnGround LabelOnGround { get; }
         public float Distance { get; }
         public Entity GroundItem { get; }
+        public string BaseName { get; } = "";
+        public string ClassName { get; } = "";
+        public int Quality { get; }
+        public bool IsVeiled { get; }
+        public bool IsFractured { get; }
+        public bool IsRGB { get; }
+        public int Sockets { get; }
+        public int LargestLink { get; }
+        public bool IsShaper { get; }
+        public bool IsHunter { get; }
+        public bool IsRedeemer { get; }
+        public bool IsCrusader { get; }
+        public bool IsWarlord { get; }
+        public bool IsElder { get; }
+        public int Height { get; }
+        public int Width { get; }
     }
 }

@@ -9,7 +9,6 @@ using ExileCore.PoEMemory.Elements;
 using ExileCore.Shared;
 using ExileCore.Shared.Cache;
 using ExileCore.Shared.Helpers;
-using Random_Features.Libs;
 using SharpDX;
 using nuVector2 = System.Numerics.Vector2;
 
@@ -19,6 +18,8 @@ namespace PickIt
 {
     public class PickIt : BaseSettingsPlugin<PickItSettings>
     {
+        public static PickIt Plugin { get; private set; }
+
         private readonly Stopwatch _debugTimer = Stopwatch.StartNew();
         private readonly WaitTime _toPick = new WaitTime(1);
         private readonly WaitTime _wait2Ms = new WaitTime(2);
@@ -33,6 +34,8 @@ namespace PickIt
 
         public override bool Initialise()
         {
+            Plugin = this;
+
             _currentLabels = new TimeCache<List<CustomItem>>(UpdateCurrentLabels, 500);
 
             #region Register keys
@@ -68,7 +71,7 @@ namespace PickIt
         {
             Settings.PickUpKey =
                 ImGuiExtension.HotkeySelector("Pickup Key: " + Settings.PickUpKey.Value, Settings.PickUpKey);
-            Settings.PickupRange.Value = ImGuiExtension.IntSlider("Pickup Radius", Settings.PickupRange);
+            Settings.PickUpRange.Value = ImGuiExtension.IntSlider("Pickup Radius", Settings.PickUpRange);
             Settings.ExtraDelay.Value = ImGuiExtension.IntSlider("Extra Click Delay", Settings.ExtraDelay);
             Settings.TimeBeforeNewClick.Value =
                 ImGuiExtension.IntSlider("Time wait for new click", Settings.TimeBeforeNewClick);
@@ -147,7 +150,7 @@ namespace PickIt
             var rectangleOfGameWindow = GameController.Window.GetWindowRectangleTimeCache;
             rectangleOfGameWindow.Inflate(-36, -36);
             var pickUpThisItem = _currentLabels.Value.FirstOrDefault(x =>
-                x.Distance < Settings.PickupRange && x.GroundItem != null &&
+                DoWePickThis(x) && x.Distance < Settings.PickUpRange && x.GroundItem != null &&
                 rectangleOfGameWindow.Intersects(new RectangleF(x.LabelOnGround.Label.GetClientRectCache.Center.X,
                     x.LabelOnGround.Label.GetClientRectCache.Center.Y, 3, 3)));
             if (_enabled || Input.GetKeyState(Settings.PickUpKey.Value))
@@ -155,6 +158,56 @@ namespace PickIt
                 yield return TryToPickV2(pickUpThisItem, portalLabel);
                 _fullWork = true;
             }
+        }
+
+        private bool DoWePickThis(CustomItem item)
+        {
+            // Everything
+            if (Settings.PickUpEverything) return true;
+
+            // Influence
+            if (Settings.PickUpInfluenced)
+            {
+                if (Settings.Veiled && item.IsVeiled) return true;
+                if (Settings.Fractured && item.IsFractured) return true;
+                if (Settings.Elder && item.IsElder) return true;
+                if (Settings.Shaper && item.IsShaper) return true;
+                if (Settings.Hunter && item.IsHunter) return true;
+                if (Settings.Redeemer && item.IsRedeemer) return true;
+                if (Settings.Crusader && item.IsCrusader) return true;
+                if (Settings.Warlord && item.IsWarlord) return true;
+            }
+
+            // Sockets
+            if (Settings.RGB && item.IsRGB) return true;
+            if (Settings.SixSockets && item.Sockets == 6) return true;
+            if (Settings.SixLinks && item.LargestLink == 6) return true;
+
+            // Flasks
+            if (item.ClassName.Contains("Flask") && Settings.Flasks && item.Quality >= Settings.FlasksQuality) return true;
+
+            // Gems
+            if (item.ClassName.Contains("Skill Gem") && Settings.Gems && item.Quality >= Settings.GemsQuality) return true;
+
+            // Base names
+            if (item.BaseName.Contains("Treasure Key")) return true;
+            if (item.BaseName.Contains("Silver Key")) return true;
+            if (item.BaseName.Contains("Golden Key")) return true;
+            if (item.BaseName.Contains("Flashpowder Keg")) return true;
+            if (item.BaseName.Contains("Stone of Passage")) return true;
+            if (item.BaseName.Contains("Watchstone")) return true;
+            if (item.BaseName.Contains("Incubator")) return true;
+            if (item.BaseName.Contains("Albino Rhoa")) return true;
+            if (item.BaseName.Contains("Splinter")) return true;
+            if (item.BaseName.Contains(" Seed")) return true;
+            if (item.BaseName.Contains(" Grain")) return true;
+            if (item.BaseName.Contains(" Bulb")) return true;
+
+            if (item.BaseName.Contains("Divine Life Flask")) return true;
+            if (item.BaseName.Contains("Quicksilver Flask")) return true;
+
+            // Default
+            return false;
         }
 
         private IEnumerator TryToPickV2(CustomItem pickItItem, LabelOnGround portalLabel)

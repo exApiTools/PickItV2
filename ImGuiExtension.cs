@@ -10,7 +10,7 @@ using SharpDX;
 using ImGuiVector2 = System.Numerics.Vector2;
 using ImGuiVector4 = System.Numerics.Vector4;
 
-namespace Random_Features.Libs
+namespace PickIt
 {
     public class ImGuiExtension
     {

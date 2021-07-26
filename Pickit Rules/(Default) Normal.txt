@@ -46,3 +46,8 @@ Chaos Disposition
 # Labyrinth #
 Treasure Key
 Golden Key
+Silver Key
+
+# The Temple of Atzoatl #
+Flashpowder Keg
+Stone of Passage
