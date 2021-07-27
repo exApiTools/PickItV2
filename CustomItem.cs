@@ -27,27 +27,50 @@ namespace PickIt
             GroundItem = groundItem;
             if (GroundItem == null) return;
 
-            Quality = (int)GroundItem.GetComponent<Quality>()?.ItemQuality;
+            if (PickIt.Plugin.Settings.Flasks || PickIt.Plugin.Settings.Gems)
+                Quality = (int)GroundItem.GetComponent<Quality>()?.ItemQuality;
+
+            if (PickIt.Plugin.Settings.Maps)
+                MapTier = GroundItem.HasComponent<Map>() ? GroundItem.GetComponent<Map>().Tier : 0;
+
             IsTargeted = () => itemItemOnGround?.GetComponent<Targetable>()?.isTargeted == true;
             IsValid = true;
 
             var mods = GroundItem.GetComponent<Mods>();
             if (mods != null)
             {
-                IsVeiled = (bool)mods.ItemMods?.Any(m => m.DisplayName.Contains("Veil"));
-                IsFractured = mods.HaveFractured;
+                if (PickIt.Plugin.Settings.PickUpInfluenced)
+                {
+                    IsVeiled = (bool)mods.ItemMods?.Any(m => m.DisplayName.Contains("Veil"));
+                    IsFractured = mods.HaveFractured;
+                }
+
+                if (PickIt.Plugin.Settings.AllUniques
+                    || PickIt.Plugin.Settings.UniqueMap
+                    || PickIt.Plugin.Settings.FullRareSetManager
+                    )
+                    Rarity = mods.ItemRarity;
+
+                if (PickIt.Plugin.Settings.FullRareSetManager)
+                {
+                    IsIdentified = mods.Identified;
+                    ItemLevel = mods.ItemLevel;
+                }
             }
 
             var sockets = GroundItem.GetComponent<Sockets>();
             if (sockets != null)
             {
-                IsRGB = sockets.IsRGB;
-                Sockets = sockets.NumberOfSockets;
-                LargestLink = sockets.LargestLinkSize;
+                if (PickIt.Plugin.Settings.RGB)
+                    IsRGB = sockets.IsRGB;
+                if (PickIt.Plugin.Settings.SixSockets)
+                    Sockets = sockets.NumberOfSockets;
+                if (PickIt.Plugin.Settings.SixLinks)
+                    LargestLink = sockets.LargestLinkSize;
             }
 
             var @base = GroundItem.GetComponent<Base>();
-            if (@base != null)
+            if (PickIt.Plugin.Settings.PickUpInfluenced && @base != null)
             {
                 IsElder = @base.isElder;
                 IsShaper = @base.isShaper;
@@ -57,14 +80,33 @@ namespace PickIt
                 IsWarlord = @base.isWarlord;
             }
 
-            var path = GroundItem.Path;
-            var baseItemType = fs.BaseItemTypes.Translate(path);
+            Path = GroundItem.Path;
+            var baseItemType = fs.BaseItemTypes.Translate(Path);
             if (baseItemType != null)
             {
-                BaseName = baseItemType.BaseName;
-                ClassName = baseItemType.ClassName;
-                Width = baseItemType.Width;
-                Height = baseItemType.Height;
+                if (PickIt.Plugin.Settings.PickUpByHardcodedNames)
+                    BaseName = baseItemType.BaseName;
+
+                if (PickIt.Plugin.Settings.Flasks
+                    || PickIt.Plugin.Settings.Gems
+                    || PickIt.Plugin.Settings.AllCurrency
+                    || PickIt.Plugin.Settings.AllDivs
+                    || PickIt.Plugin.Settings.QuestItems
+                    || PickIt.Plugin.Settings.MapFragments
+                    || PickIt.Plugin.Settings.FullRareSetManager
+                    )
+                    ClassName = baseItemType.ClassName;
+
+                if (PickIt.Plugin.Settings.RGB)
+                {
+                    Width = baseItemType.Width;
+                    Height = baseItemType.Height;
+                }
+            }
+
+            if (PickIt.Plugin.Settings.FullRareSetManager && GroundItem.HasComponent<Weapon>())
+            {
+                IsWeapon = true;
             }
         }
         public LabelOnGround LabelOnGround { get; }
@@ -86,5 +128,11 @@ namespace PickIt
         public bool IsElder { get; }
         public int Height { get; }
         public int Width { get; }
+        public string Path { get; }
+        public ItemRarity Rarity { get; }
+        public bool IsIdentified { get; }
+        public bool IsWeapon { get; }
+        public int ItemLevel { get; }
+        public int MapTier { get; }
     }
 }

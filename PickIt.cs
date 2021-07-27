@@ -8,7 +8,9 @@ using ExileCore.PoEMemory.Components;
 using ExileCore.PoEMemory.Elements;
 using ExileCore.Shared;
 using ExileCore.Shared.Cache;
+using ExileCore.Shared.Enums;
 using ExileCore.Shared.Helpers;
+using Newtonsoft.Json;
 using SharpDX;
 using nuVector2 = System.Numerics.Vector2;
 
@@ -31,6 +33,7 @@ namespace PickIt
         private bool _fullWork = true;
         private Coroutine _pickItCoroutine;
         private TimeCache<List<CustomItem>> _currentLabels;
+        public FRSetManagerPublishInformation FullRareSetManagerData = new FRSetManagerPublishInformation();
 
         public override bool Initialise()
         {
@@ -123,6 +126,14 @@ namespace PickIt
         {
             if (eventId == "start_pick_it") _enabled = true;
             if (eventId == "end_pick_it") _enabled = false;
+
+            if (!Settings.Enable.Value) return;
+
+            if (eventId == "frsm_display_data")
+            {
+                var argSerialised = JsonConvert.SerializeObject(args);
+                FullRareSetManagerData = JsonConvert.DeserializeObject<FRSetManagerPublishInformation>(argSerialised);
+            }
         }
 
         private List<CustomItem> UpdateCurrentLabels()
@@ -179,32 +190,78 @@ namespace PickIt
             }
 
             // Sockets
-            if (Settings.RGB && item.IsRGB) return true;
+            if (Settings.RGB && item.IsRGB 
+                && item.Width <= Settings.RGBWidth 
+                && item.Height <= Settings.RGBHeight) return true;
             if (Settings.SixSockets && item.Sockets == 6) return true;
             if (Settings.SixLinks && item.LargestLink == 6) return true;
 
             // Flasks
-            if (item.ClassName.Contains("Flask") && Settings.Flasks && item.Quality >= Settings.FlasksQuality) return true;
+            if (Settings.Flasks && item.Quality >= Settings.FlasksQuality 
+                && item.ClassName.Contains("Flask")) return true;
 
             // Gems
-            if (item.ClassName.Contains("Skill Gem") && Settings.Gems && item.Quality >= Settings.GemsQuality) return true;
+            if (Settings.Gems && item.Quality >= Settings.GemsQuality 
+                && item.ClassName.Contains("Skill Gem")) return true;
+
+            // Currency
+            if (Settings.AllCurrency && item.ClassName.EndsWith("Currency"))
+                item.Path.Equals("Metadata/Items/Currency/CurrencyIdentification", System.StringComparison.Ordinal);
+
+            // Divination Cards
+            if (Settings.AllDivs && item.ClassName == "DivinationCard") return true;
+
+            // Uniques
+            if (Settings.AllUniques && item.Rarity == ItemRarity.Unique) return true;
+
+            // Quest items
+            if (Settings.QuestItems && item.ClassName == "QuestItem") return true;
+
+            // Maps
+            if (Settings.Maps && item.MapTier >= Settings.MapTier.Value) return true;
+            if (Settings.Maps && Settings.UniqueMap && item.MapTier >= 1 && item.Rarity == ItemRarity.Unique) return true;
+            if (Settings.Maps && Settings.MapFragments && item.ClassName == "MapFragment") return true;
+
+            // FRSMI
+            if (Settings.FullRareSetManager && !item.IsIdentified && item.Rarity == ItemRarity.Rare)
+            {
+                var setData = FullRareSetManagerData;
+                var maxSetWanted = setData.WantedSets;
+                var maxPickupOverides = Settings.FullRareSetManagerPickupOverrides;
+
+                if (item.ItemLevel >= 60 && item.ItemLevel <= 74)
+                {
+                    if (Settings.RareRings && item.ClassName == "Ring" && setData.GatheredRings < (maxPickupOverides.Rings > -1 ? maxPickupOverides.Rings : maxSetWanted)) return true;
+                    if (Settings.RareAmulets && item.ClassName == "Amulet" && setData.GatheredAmulets < (maxPickupOverides.Amulets > -1 ? maxPickupOverides.Amulets : maxSetWanted)) return true;
+                    if (Settings.RareBelts && item.ClassName == "Belt" && setData.GatheredBelts < (maxPickupOverides.Belts > -1 ? maxPickupOverides.Belts : maxSetWanted)) return true;
+                    if (Settings.RareGloves && item.ClassName == "Gloves" && setData.GatheredGloves < (maxPickupOverides.Gloves > -1 ? maxPickupOverides.Gloves : maxSetWanted)) return true;
+                    if (Settings.RareBoots && item.ClassName == "Boots" && setData.GatheredBoots < (maxPickupOverides.Boots > -1 ? maxPickupOverides.Boots : maxSetWanted)) return true;
+                    if (Settings.RareHelmets && item.ClassName == "Helmet" && setData.GatheredHelmets < (maxPickupOverides.Helmets > -1 ? maxPickupOverides.Helmets : maxSetWanted)) return true;
+                    if (Settings.RareArmour && item.ClassName == "Body Armour" && setData.GatheredBodyArmors < (maxPickupOverides.BodyArmors > -1 ? maxPickupOverides.BodyArmors : maxSetWanted)) return true;
+                    if (Settings.RareWeapon && item.IsWeapon && setData.GatheredWeapons < (maxPickupOverides.Weapons > -1 ? maxPickupOverides.Weapons : maxSetWanted))
+                        if (item.Width <= Settings.RareWeaponWidth && item.Height <= Settings.RareWeaponHeight) return true;
+                }
+            }
 
             // Base names
-            if (item.BaseName.Contains("Treasure Key")) return true;
-            if (item.BaseName.Contains("Silver Key")) return true;
-            if (item.BaseName.Contains("Golden Key")) return true;
-            if (item.BaseName.Contains("Flashpowder Keg")) return true;
-            if (item.BaseName.Contains("Stone of Passage")) return true;
-            if (item.BaseName.Contains("Watchstone")) return true;
-            if (item.BaseName.Contains("Incubator")) return true;
-            if (item.BaseName.Contains("Albino Rhoa")) return true;
-            if (item.BaseName.Contains("Splinter")) return true;
-            if (item.BaseName.Contains(" Seed")) return true;
-            if (item.BaseName.Contains(" Grain")) return true;
-            if (item.BaseName.Contains(" Bulb")) return true;
+            if (Settings.PickUpByHardcodedNames)
+            {
+                if (item.BaseName.Contains("Treasure Key")) return true;
+                if (item.BaseName.Contains("Silver Key")) return true;
+                if (item.BaseName.Contains("Golden Key")) return true;
+                if (item.BaseName.Contains("Flashpowder Keg")) return true;
+                if (item.BaseName.Contains("Stone of Passage")) return true;
+                if (item.BaseName.Contains("Watchstone")) return true;
+                if (item.BaseName.Contains("Incubator")) return true;
+                if (item.BaseName.Contains("Albino Rhoa")) return true;
+                if (item.BaseName.Contains("Splinter")) return true;
+                if (item.BaseName.Contains(" Seed")) return true;
+                if (item.BaseName.Contains(" Grain")) return true;
+                if (item.BaseName.Contains(" Bulb")) return true;
 
-            if (item.BaseName.Contains("Divine Life Flask")) return true;
-            if (item.BaseName.Contains("Quicksilver Flask")) return true;
+                if (item.BaseName.Contains("Divine Life Flask")) return true;
+                if (item.BaseName.Contains("Quicksilver Flask")) return true;
+            }
 
             // Default
             return false;
