@@ -209,7 +209,7 @@ namespace PickIt
         public static Keys HotkeySelector(string buttonName, Keys currentKey)
         {
             var open = true;
-            if (ImGui.Button(buttonName))
+            if (ImGui.Button($"{buttonName} {currentKey}"))
             {
                 ImGui.OpenPopup(buttonName);
                 open = true;

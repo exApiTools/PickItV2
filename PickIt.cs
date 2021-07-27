@@ -10,6 +10,7 @@ using ExileCore.Shared;
 using ExileCore.Shared.Cache;
 using ExileCore.Shared.Enums;
 using ExileCore.Shared.Helpers;
+using ImGuiNET;
 using Newtonsoft.Json;
 using SharpDX;
 using nuVector2 = System.Numerics.Vector2;
@@ -72,12 +73,8 @@ namespace PickIt
 
         public override void DrawSettings()
         {
-            Settings.PickUpKey =
-                ImGuiExtension.HotkeySelector("Pickup Key: " + Settings.PickUpKey.Value, Settings.PickUpKey);
-            Settings.PickUpRange.Value = ImGuiExtension.IntSlider("Pickup Radius", Settings.PickUpRange);
-            Settings.ExtraDelay.Value = ImGuiExtension.IntSlider("Extra Click Delay", Settings.ExtraDelay);
-            Settings.TimeBeforeNewClick.Value =
-                ImGuiExtension.IntSlider("Time wait for new click", Settings.TimeBeforeNewClick);
+            if (Settings.Enable) ImGuiDrawSettings.DrawSettings();
+            else ImGui.Text("Enable Pickit plugin to display settings.");
         }
 
         public override Job Tick()

@@ -31,6 +31,19 @@ namespace PickIt
                     PickIt.Plugin.Settings.AllDivs.Value = ImGuiExtension.Checkbox("All Divination Cards", PickIt.Plugin.Settings.AllDivs.Value);
                     PickIt.Plugin.Settings.AllUniques.Value = ImGuiExtension.Checkbox("All Uniques", PickIt.Plugin.Settings.AllUniques.Value);
                     PickIt.Plugin.Settings.QuestItems.Value = ImGuiExtension.Checkbox("Quest Items", PickIt.Plugin.Settings.QuestItems.Value);
+                    PickIt.Plugin.Settings.PickUpByHardcodedNames.Value = ImGuiExtension.Checkbox("Pick up by hardcoded names", PickIt.Plugin.Settings.PickUpByHardcodedNames.Value);
+
+                    PickIt.Plugin.Settings.Flasks.Value = ImGuiExtension.Checkbox("Pick up flasks", PickIt.Plugin.Settings.Flasks.Value);
+                    if (PickIt.Plugin.Settings.Flasks)
+                    {
+                        PickIt.Plugin.Settings.FlasksQuality.Value = ImGuiExtension.IntSlider("Minimum quality of flasks", PickIt.Plugin.Settings.FlasksQuality);
+                    }
+
+                    PickIt.Plugin.Settings.Gems.Value = ImGuiExtension.Checkbox("Pick up gems", PickIt.Plugin.Settings.Gems.Value);
+                    if (PickIt.Plugin.Settings.Gems)
+                    {
+                        PickIt.Plugin.Settings.GemsQuality.Value = ImGuiExtension.IntSlider("Minimum quality of gems", PickIt.Plugin.Settings.GemsQuality);
+                    }
 
                     if (PickIt.Plugin.Settings.Maps)
                         ImGui.PushStyleColor(ImGuiCol.Header, green);
@@ -82,28 +95,11 @@ namespace PickIt
                         {
                             PickIt.Plugin.Settings.RGBWidth.Value = ImGuiExtension.IntSlider("Maximum Width##RGBWidth", PickIt.Plugin.Settings.RGBWidth);
                             PickIt.Plugin.Settings.RGBHeight.Value = ImGuiExtension.IntSlider("Maximum Height##RGBHeight", PickIt.Plugin.Settings.RGBHeight);
-                            ImGui.Separator();
                         }
                         PickIt.Plugin.Settings.SixSockets.Value = ImGuiExtension.Checkbox("Pick up Six-Socketed items", PickIt.Plugin.Settings.SixSockets.Value);
                         PickIt.Plugin.Settings.SixLinks.Value = ImGuiExtension.Checkbox("Pick up Six-Linked items", PickIt.Plugin.Settings.SixLinks.Value);
                         ImGui.Separator();
                     }
-
-                    PickIt.Plugin.Settings.Flasks.Value = ImGuiExtension.Checkbox("Pick up flasks", PickIt.Plugin.Settings.Flasks.Value);
-                    if (PickIt.Plugin.Settings.Flasks)
-                    {
-                        PickIt.Plugin.Settings.FlasksQuality.Value = ImGuiExtension.IntSlider("Minimum quality of flasks", PickIt.Plugin.Settings.FlasksQuality);
-                        ImGui.Separator();
-                    }
-
-                    PickIt.Plugin.Settings.Gems.Value = ImGuiExtension.Checkbox("Pick up gems", PickIt.Plugin.Settings.Gems.Value);
-                    if (PickIt.Plugin.Settings.Gems)
-                    {
-                        PickIt.Plugin.Settings.GemsQuality.Value = ImGuiExtension.IntSlider("Minimum quality of gems", PickIt.Plugin.Settings.GemsQuality);
-                        ImGui.Separator();
-                    }
-
-                    PickIt.Plugin.Settings.PickUpByHardcodedNames.Value = ImGuiExtension.Checkbox("Pick up by hardcoded names", PickIt.Plugin.Settings.PickUpByHardcodedNames.Value);
 
                     if (PickIt.Plugin.Settings.FullRareSetManager)
                         ImGui.PushStyleColor(ImGuiCol.Header, green);
