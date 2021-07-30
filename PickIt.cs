@@ -36,7 +36,7 @@ namespace PickIt
         private TimeCache<List<CustomItem>> UpdateCacheList { get; set; }
         private readonly List<Entity> _entities = new List<Entity>();
         private readonly Stopwatch _pickUpTimer = Stopwatch.StartNew();
-        private readonly Stopwatch DebugTimer = Stopwatch.StartNew();
+        private readonly Stopwatch _debugTimer = Stopwatch.StartNew();
         private readonly WaitTime _toPick = new WaitTime(1);
         private readonly WaitTime _wait2Ms = new WaitTime(2);
         private Vector2 _clickWindowOffset;
@@ -53,7 +53,7 @@ namespace PickIt
         public string MagicRuleFile;
         private WaitTime mainWorkCoroutine = new WaitTime(5);
         public string NormalRuleFile;
-        private Coroutine pickItCoroutine;
+        private Coroutine _pickItCoroutine;
         public string RareRuleFile;
         private WaitTime tryToPick = new WaitTime(7);
         public string UniqueRuleFile;
@@ -76,7 +76,7 @@ namespace PickIt
 
         public override bool Initialise()
         {
-            _currentLabels = new TimeCache<List<CustomItem>>(UpdateCurrentLabels, 500);
+            _currentLabels = new TimeCache<List<CustomItem>>(UpdateCurrentLabels, 500); // alexs idea <3
             
             #region Register keys
 
@@ -87,10 +87,10 @@ namespace PickIt
             #endregion
             
             Controller = this;
-            pickItCoroutine = new Coroutine(MainWorkCoroutine(), this, "Pick It");
-            Core.ParallelRunner.Run(pickItCoroutine);
-            pickItCoroutine.Pause();
-            DebugTimer.Reset();
+            _pickItCoroutine = new Coroutine(MainWorkCoroutine(), this, "Pick It");
+            Core.ParallelRunner.Run(_pickItCoroutine);
+            _pickItCoroutine.Pause();
+            _debugTimer.Reset();
             Settings.MouseSpeed.OnValueChanged += (sender, f) => { Mouse.speedMouse = Settings.MouseSpeed.Value; };
             _workCoroutine = new WaitTime(Settings.ExtraDelay);
             Settings.ExtraDelay.OnValueChanged += (sender, i) => _workCoroutine = new WaitTime(i);
@@ -118,7 +118,7 @@ namespace PickIt
                 yield return FindItemToPick();
 
                 coroutineCounter++;
-                pickItCoroutine.UpdateTicks(coroutineCounter);
+                _pickItCoroutine.UpdateTicks(coroutineCounter);
                 yield return _workCoroutine;
             }
         }
@@ -316,41 +316,41 @@ namespace PickIt
             if (Input.GetKeyState(Keys.Escape))
             {
                 _enabled = false;
-                pickItCoroutine.Pause();
+                _pickItCoroutine.Pause();
             }
 
             if (_enabled ||
                 Input.GetKeyState(Settings.PickUpKey.Value) ||
                 CanLazyLoot())
             {
-                DebugTimer.Restart();
+                _debugTimer.Restart();
 
-                if (pickItCoroutine.IsDone)
+                if (_pickItCoroutine.IsDone)
                 {
                     var firstOrDefault =
                         Core.ParallelRunner.Coroutines.FirstOrDefault(x => x.OwnerName == nameof(PickIt));
 
                     if (firstOrDefault != null)
-                        pickItCoroutine = firstOrDefault;
+                        _pickItCoroutine = firstOrDefault;
                 }
 
-                pickItCoroutine.Resume();
+                _pickItCoroutine.Resume();
                 _fullWork = false;
             }
             else
             {
                 if (_fullWork)
                 {
-                    pickItCoroutine.Pause();
-                    DebugTimer.Reset();
+                    _pickItCoroutine.Pause();
+                    _debugTimer.Reset();
                 }
             }
 
-            if (DebugTimer.ElapsedMilliseconds > 300)
+            if (_debugTimer.ElapsedMilliseconds > 300)
             {
                 _fullWork = true;
                 //LogMessage("Error pick it stop after time limit 300 ms", 1);
-                DebugTimer.Reset();
+                _debugTimer.Reset();
             }
             //Graphics.DrawText($@"PICKIT :: Debug Tick Timer ({DebugTimer.ElapsedMilliseconds}ms)", new Vector2(100, 100), FontAlign.Left);
             //DebugTimer.Reset();
@@ -698,7 +698,7 @@ namespace PickIt
             {
                 return labels.Where(x => x.Address != 0 && x.ItemOnGround?.Path != null && x.IsVisible
                              && x.Label.GetClientRectCache.Center.PointInRectangle(rect)
-                             // && x.CanPickUp
+                             // && x.CanPickUp // broken in 3.15
                              && x.MaxTimeForPickUp.TotalSeconds <= 0)
                     .Select(x => new CustomItem(x, GameController.Files, x.ItemOnGround.DistancePlayer,
                             _weightsRules))
@@ -708,7 +708,7 @@ namespace PickIt
             {
                 return labels.Where(x => x.Address != 0 && x.ItemOnGround?.Path != null && x.IsVisible
                              && x.Label.GetClientRectCache.Center.PointInRectangle(rect)
-                             // && x.CanPickUp
+                             // && x.CanPickUp // broken in 3.15
                              && x.MaxTimeForPickUp.TotalSeconds <= 0)
                     .Select(x => new CustomItem(x, GameController.Files, x.ItemOnGround.DistancePlayer,
                             _weightsRules))
@@ -973,7 +973,7 @@ namespace PickIt
 
         public override void OnPluginDestroyForHotReload()
         {
-            pickItCoroutine.Done(true);
+            _pickItCoroutine.Done(true);
         }
 
         #endregion
