@@ -78,7 +78,6 @@ namespace PickIt
             IgnoreRuleFile = string.Empty;
             LeftClickToggleNode = new ToggleNode(true);
             OverrideItemPickup = new ToggleNode(false);
-            MouseSpeed = new RangeNode<float>(1, 0, 30);
         }
 
         public ToggleNode Enable { get; set; }   
