@@ -10,10 +10,11 @@ using SharpDX;
 using ImGuiVector2 = System.Numerics.Vector2;
 using ImGuiVector4 = System.Numerics.Vector4;
 
-namespace PickIt
+namespace Random_Features.Libs
 {
     public class ImGuiExtension
     {
+
         // Int Sliders
         public static int IntSlider(string labelString, int value, int minValue, int maxValue)
         {
@@ -58,16 +59,14 @@ namespace PickIt
             return refValue;
         }
 
-        public static float FloatSlider(string labelString, string sliderString, float value, float minValue,
-            float maxValue)
+        public static float FloatSlider(string labelString, string sliderString, float value, float minValue, float maxValue)
         {
             var refValue = value;
             ImGui.SliderFloat(labelString, ref refValue, minValue, maxValue, $"{sliderString}: {value}", 1f);
             return refValue;
         }
 
-        public static float FloatSlider(string labelString, string sliderString, float value, float minValue,
-            float maxValue, float power)
+        public static float FloatSlider(string labelString, string sliderString, float value, float minValue, float maxValue, float power)
         {
             var refValue = value;
             ImGui.SliderFloat(labelString, ref refValue, minValue, maxValue, $"{sliderString}: {value}", power);
@@ -91,16 +90,14 @@ namespace PickIt
         public static float FloatSlider(string labelString, string sliderString, RangeNode<float> setting)
         {
             var refValue = setting.Value;
-            ImGui.SliderFloat(labelString, ref refValue, setting.Min, setting.Max, $"{sliderString}: {setting.Value}",
-                1f);
+            ImGui.SliderFloat(labelString, ref refValue, setting.Min, setting.Max, $"{sliderString}: {setting.Value}", 1f);
             return refValue;
         }
 
         public static float FloatSlider(string labelString, string sliderString, RangeNode<float> setting, float power)
         {
             var refValue = setting.Value;
-            ImGui.SliderFloat(labelString, ref refValue, setting.Min, setting.Max, $"{sliderString}: {setting.Value}",
-                power);
+            ImGui.SliderFloat(labelString, ref refValue, setting.Min, setting.Max, $"{sliderString}: {setting.Value}", power);
             return refValue;
         }
 
@@ -109,8 +106,7 @@ namespace PickIt
         {
             var color = inputColor.ToVector4();
             var colorToVect4 = new ImGuiVector4(color.X, color.Y, color.Z, color.W);
-            if (ImGui.ColorEdit4(labelName, ref colorToVect4, ImGuiColorEditFlags.AlphaBar))
-                return new Color(colorToVect4.X, colorToVect4.Y, colorToVect4.Z, colorToVect4.W);
+            if (ImGui.ColorEdit4(labelName, ref colorToVect4, ImGuiColorEditFlags.AlphaBar)) return new Color(colorToVect4.X, colorToVect4.Y, colorToVect4.Z, colorToVect4.W);
             return inputColor;
         }
 
@@ -129,17 +125,17 @@ namespace PickIt
         }
 
         // Hotkey Selector
-        public static IEnumerable<Keys> KeyCodes()
-        {
-            return Enum.GetValues(typeof(Keys)).Cast<Keys>();
-        }
+        public static IEnumerable<Keys> KeyCodes() => Enum.GetValues(typeof(Keys)).Cast<Keys>();
 
         // Tooltip Hover
         public static void ToolTipWithText(string text, string desc)
         {
             ImGui.SameLine();
             ImGui.TextDisabled(text);
-            if (ImGui.IsItemHovered(ImGuiHoveredFlags.AnyWindow)) ImGui.SetTooltip(desc);
+            if (ImGui.IsItemHovered(ImGuiHoveredFlags.AnyWindow))
+            {
+                ImGui.SetTooltip(desc);
+            }
         }
 
         public static int ComboBox(string sideLabel, int currentSelectedItem, List<string> objectList)
@@ -148,9 +144,7 @@ namespace PickIt
 
             return currentSelectedItem;
         }
-
-        public static string ComboBox(string sideLabel, string currentSelectedItem, List<string> objectList,
-            ImGuiComboFlags comboFlags = ImGuiComboFlags.HeightRegular)
+        public static string ComboBox(string sideLabel, string currentSelectedItem, List<string> objectList, ImGuiComboFlags comboFlags = ImGuiComboFlags.HeightRegular)
         {
             if (ImGui.BeginCombo(sideLabel, currentSelectedItem, comboFlags))
             {
@@ -167,9 +161,7 @@ namespace PickIt
 
             return currentSelectedItem;
         }
-
-        public static string ComboBox(string sideLabel, string currentSelectedItem, List<string> objectList,
-            out bool didChange, ImGuiComboFlags comboFlags = ImGuiComboFlags.HeightRegular)
+        public static string ComboBox(string sideLabel, string currentSelectedItem, List<string> objectList, out bool didChange, ImGuiComboFlags comboFlags = ImGuiComboFlags.HeightRegular)
         {
             if (ImGui.BeginCombo(sideLabel, currentSelectedItem, comboFlags))
             {
@@ -182,7 +174,6 @@ namespace PickIt
                         didChange = true;
                         return objectList[n];
                     }
-
                     if (isSelected) ImGui.SetItemDefaultFocus();
                 }
 
@@ -195,13 +186,12 @@ namespace PickIt
 
         public static string InputText(string label, string currentValue, uint maxLength, ImGuiInputTextFlags flags)
         {
-            var buff = new byte[maxLength];
-            if (!string.IsNullOrEmpty(currentValue))
+            byte[] buff = new byte[maxLength];
+            if (!String.IsNullOrEmpty(currentValue))
             {
-                var currentValueBytes = Encoding.UTF8.GetBytes(currentValue);
+                byte[] currentValueBytes = Encoding.UTF8.GetBytes(currentValue);
                 Array.Copy(currentValueBytes, buff, currentValueBytes.Length);
             }
-
             ImGui.InputText(label, buff, maxLength, flags);
             return Encoding.Default.GetString(buff).TrimEnd('\0');
         }
@@ -209,13 +199,13 @@ namespace PickIt
         public static Keys HotkeySelector(string buttonName, Keys currentKey)
         {
             var open = true;
-            if (ImGui.Button($"{buttonName} {currentKey}"))
+            if (ImGui.Button(buttonName))
             {
                 ImGui.OpenPopup(buttonName);
                 open = true;
             }
 
-            if (ImGui.BeginPopupModal(buttonName, ref open, (ImGuiWindowFlags) 35))
+            if (ImGui.BeginPopupModal(buttonName, ref open, (ImGuiWindowFlags)35))
             {
                 if (Input.GetKeyState(Keys.Escape))
                 {
@@ -226,10 +216,10 @@ namespace PickIt
                 {
                     foreach (var key in Enum.GetValues(typeof(Keys)))
                     {
-                        var keyState = Input.GetKeyState((Keys) key);
+                        var keyState = Input.GetKeyState((Keys)key);
                         if (keyState)
                         {
-                            currentKey = (Keys) key;
+                            currentKey = (Keys)key;
                             ImGui.CloseCurrentPopup();
                             break;
                         }
@@ -258,13 +248,13 @@ namespace PickIt
         }
 
         // Color menu tabs
-        public static void ImGuiExtension_ColorTabs(string idString, int height, IReadOnlyList<string> settingList,
-            ref int selectedItem, ref int uniqueIdPop)
+        public static void ImGuiExtension_ColorTabs(string idString, int height, IReadOnlyList<string> settingList, ref int selectedItem, ref int uniqueIdPop)
         {
-            var newcontentRegionArea = new ImGuiVector2();
+            var newcontentRegionArea = new System.Numerics.Vector2();
             newcontentRegionArea = ImGuiNative.igGetContentRegionAvail();
             var boxRegion = new ImGuiVector2(newcontentRegionArea.X, height);
             if (ImGui.BeginChild(idString, boxRegion, true, ImGuiWindowFlags.HorizontalScrollbar))
+            {
                 for (var i = 0; i < settingList.Count; i++)
                 {
                     ImGui.PushID(uniqueIdPop);
@@ -282,6 +272,7 @@ namespace PickIt
                     ImGui.PopID();
                 }
 
+            }
             ImGui.EndChild();
         }
 
@@ -312,7 +303,10 @@ namespace PickIt
         {
             ImGui.SameLine();
             ImGui.TextDisabled("(?)");
-            if (ImGui.IsItemHovered(ImGuiHoveredFlags.None)) ImGui.SetTooltip(desc);
+            if (ImGui.IsItemHovered(ImGuiHoveredFlags.None))
+            {
+                ImGui.SetTooltip(desc);
+            }
         }
     }
 }

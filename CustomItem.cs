@@ -16,123 +16,181 @@ namespace PickIt
         public Func<bool> IsTargeted;
         public bool IsValid;
 
-        public CustomItem(LabelOnGround item, FilesContainer fs, float distance, Dictionary<string, int> weightsRules)
+        public CustomItem(LabelOnGround item, FilesContainer fs, float distance, Dictionary<string, int> weightsRules, bool isMetamorphItem = false)
         {
-            LabelOnGround = item;
-            Distance = distance;
-            var itemItemOnGround = item.ItemOnGround;
-            var worldItem = itemItemOnGround?.GetComponent<WorldItem>();
-            if (worldItem == null) return;
-            var groundItem = worldItem.ItemEntity;
-            GroundItem = groundItem;
-            if (GroundItem == null) return;
-
-            if (PickIt.Plugin.Settings.Flasks || PickIt.Plugin.Settings.Gems)
-                Quality = (int)GroundItem.GetComponent<Quality>()?.ItemQuality;
-
-            if (PickIt.Plugin.Settings.Maps)
-                MapTier = GroundItem.HasComponent<Map>() ? GroundItem.GetComponent<Map>().Tier : 0;
-
-            IsTargeted = () => itemItemOnGround?.GetComponent<Targetable>()?.isTargeted == true;
-            IsValid = true;
-
-            var mods = GroundItem.GetComponent<Mods>();
-            if (mods != null)
+            if (isMetamorphItem)
             {
-                if (PickIt.Plugin.Settings.PickUpInfluenced)
+                IsMetaItem = true;
+                LabelOnGround = item;
+                Distance = distance;
+                var itemItemOnGround = item.ItemOnGround;
+                var worldIcon = itemItemOnGround?.GetComponent<MinimapIcon>();
+                if (worldIcon == null) return;
+                //var groundItem = worldItem.ItemEntity;
+                WorldIcon = worldIcon;
+                GroundItem = itemItemOnGround;
+                Path = GroundItem?.Path;
+
+                if (Path != null && Path.Length < 1)
                 {
-                    IsVeiled = (bool)mods.ItemMods?.Any(m => m.DisplayName.Contains("Veil"));
-                    IsFractured = mods.HaveFractured;
+                    DebugWindow.LogMsg($"World2: {worldIcon.Address:X} P: {Path}", 2);
+                    DebugWindow.LogMsg($"Ground2: {GroundItem.Address:X} P {Path}", 2);
+                    return;
                 }
 
-                if (PickIt.Plugin.Settings.AllUniques
-                    || PickIt.Plugin.Settings.UniqueMap
-                    || PickIt.Plugin.Settings.FullRareSetManager
-                    )
-                    Rarity = mods.ItemRarity;
-
-                if (PickIt.Plugin.Settings.FullRareSetManager)
+                IsTargeted = () =>
                 {
-                    IsIdentified = mods.Identified;
-                    ItemLevel = mods.ItemLevel;
-                }
-            }
+                    var isTargeted = itemItemOnGround.GetComponent<Targetable>()?.isTargeted;
+                    return isTargeted != null && (bool)isTargeted;
+                };
 
-            var sockets = GroundItem.GetComponent<Sockets>();
-            if (sockets != null)
-            {
-                if (PickIt.Plugin.Settings.RGB)
-                    IsRGB = sockets.IsRGB;
-                if (PickIt.Plugin.Settings.SixSockets)
-                    Sockets = sockets.NumberOfSockets;
-                if (PickIt.Plugin.Settings.SixLinks)
-                    LargestLink = sockets.LargestLinkSize;
-            }
+                var baseItemType = fs.BaseItemTypes.Translate(Path);
 
-            var @base = GroundItem.GetComponent<Base>();
-            if (PickIt.Plugin.Settings.PickUpInfluenced && @base != null)
-            {
-                IsElder = @base.isElder;
-                IsShaper = @base.isShaper;
-                IsHunter = @base.isHunter;
-                IsRedeemer = @base.isRedeemer;
-                IsCrusader = @base.isCrusader;
-                IsWarlord = @base.isWarlord;
-            }
-
-            Path = GroundItem.Path;
-            var baseItemType = fs.BaseItemTypes.Translate(Path);
-            if (baseItemType != null)
-            {
-                if (PickIt.Plugin.Settings.PickUpByHardcodedNames)
-                    BaseName = baseItemType.BaseName;
-
-                if (PickIt.Plugin.Settings.Flasks
-                    || PickIt.Plugin.Settings.Gems
-                    || PickIt.Plugin.Settings.AllCurrency
-                    || PickIt.Plugin.Settings.AllDivs
-                    || PickIt.Plugin.Settings.QuestItems
-                    || PickIt.Plugin.Settings.MapFragments
-                    || PickIt.Plugin.Settings.FullRareSetManager
-                    )
+                if (baseItemType != null)
+                {
                     ClassName = baseItemType.ClassName;
-
-                if (PickIt.Plugin.Settings.RGB)
-                {
+                    BaseName = baseItemType.BaseName;
                     Width = baseItemType.Width;
                     Height = baseItemType.Height;
+                    if (weightsRules.TryGetValue(BaseName, out var w)) Weight = w;
+                    if (ClassName.StartsWith("Heist")) IsHeist = true;
                 }
+
+                IsValid = true;
+            }
+            else
+            {
+                isMetamorphItem = false;
+                LabelOnGround = item;
+                Distance = distance;
+                var itemItemOnGround = item.ItemOnGround;
+                var worldItem = itemItemOnGround?.GetComponent<WorldItem>();
+                if (worldItem == null) return;
+                var groundItem = worldItem.ItemEntity;
+                GroundItem = groundItem;
+                Path = groundItem?.Path;
+                if (GroundItem == null) return;
+
+                if (Path != null && Path.Length < 1)
+                {
+                    DebugWindow.LogMsg($"World: {worldItem.Address:X} P: {Path}", 2);
+                    DebugWindow.LogMsg($"Ground: {GroundItem.Address:X} P {Path}", 2);
+                    return;
+                }
+
+                IsTargeted = () => itemItemOnGround?.GetComponent<Targetable>()?.isTargeted == true;
+
+                var baseItemType = fs.BaseItemTypes.Translate(Path);
+
+                if (baseItemType != null)
+                {
+                    ClassName = baseItemType.ClassName;
+                    BaseName = baseItemType.BaseName;
+                    Width = baseItemType.Width;
+                    Height = baseItemType.Height;
+                    if (weightsRules.TryGetValue(BaseName, out var w)) Weight = w;
+                    if (ClassName.StartsWith("Heist")) IsHeist = true;
+                }
+
+                var WeaponClass = new List<string>
+                {
+                    "One Hand Mace",
+                    "Two Hand Mace",
+                    "One Hand Axe",
+                    "Two Hand Axe",
+                    "One Hand Sword",
+                    "Two Hand Sword",
+                    "Thrusting One Hand Sword",
+                    "Bow",
+                    "Claw",
+                    "Dagger",
+                    "Rune Dagger",
+                    "Sceptre",
+                    "Staff",
+                    "Wand"
+                };
+
+                if (GroundItem.HasComponent<Quality>())
+                {
+                    var quality = GroundItem.GetComponent<Quality>();
+                    Quality = quality.ItemQuality;
+                }
+
+                if (GroundItem.HasComponent<Base>())
+                {
+                    var @base = GroundItem.GetComponent<Base>();
+                    IsElder = @base.isElder;
+                    IsShaper = @base.isShaper;
+                    IsHunter = @base.isHunter;
+                    IsRedeemer = @base.isRedeemer;
+                    IsCrusader = @base.isCrusader;
+                    IsWarlord = @base.isWarlord;
+                }
+
+                if (GroundItem.HasComponent<Mods>())
+                {
+                    var mods = GroundItem.GetComponent<Mods>();
+                    Rarity = mods.ItemRarity;
+                    IsIdentified = mods.Identified;
+                    ItemLevel = mods.ItemLevel;
+                    IsFractured = mods.HaveFractured;
+                    IsVeiled = mods.ItemMods.Any(m => m.DisplayName.Contains("Veil"));
+                }
+
+                if (GroundItem.HasComponent<Sockets>())
+                {
+                    var sockets = GroundItem.GetComponent<Sockets>();
+                    IsRGB = sockets.IsRGB;
+                    Sockets = sockets.NumberOfSockets;
+                    LargestLink = sockets.LargestLinkSize;
+                }
+
+                if (GroundItem.HasComponent<Weapon>())
+                {
+                    IsWeapon = true;
+                }
+
+                MapTier = GroundItem.HasComponent<Map>() ? GroundItem.GetComponent<Map>().Tier : 0;
+                IsValid = true;
             }
 
-            if (PickIt.Plugin.Settings.FullRareSetManager && GroundItem.HasComponent<Weapon>())
-            {
-                IsWeapon = true;
-            }
         }
+
+        public string BaseName { get; } = "";
+        public string ClassName { get; } = "";
         public LabelOnGround LabelOnGround { get; }
         public float Distance { get; }
         public Entity GroundItem { get; }
-        public string BaseName { get; } = "";
-        public string ClassName { get; } = "";
-        public int Quality { get; }
-        public bool IsVeiled { get; }
-        public bool IsFractured { get; }
+
+        public MinimapIcon WorldIcon { get;}
+        public int Height { get; }
+        public bool IsElder { get; }
+        public bool IsIdentified { get; }
         public bool IsRGB { get; }
-        public int Sockets { get; }
-        public int LargestLink { get; }
         public bool IsShaper { get; }
         public bool IsHunter { get; }
         public bool IsRedeemer { get; }
         public bool IsCrusader { get; }
         public bool IsWarlord { get; }
-        public bool IsElder { get; }
-        public int Height { get; }
-        public int Width { get; }
-        public string Path { get; }
-        public ItemRarity Rarity { get; }
-        public bool IsIdentified { get; }
+        public bool IsHeist { get; }
+        public bool IsVeiled { get; }
         public bool IsWeapon { get; }
         public int ItemLevel { get; }
+        public int LargestLink { get; }
         public int MapTier { get; }
+        public string Path { get; }
+        public int Quality { get; }
+        public ItemRarity Rarity { get; }
+        public int Sockets { get; }
+        public int Width { get; }
+        public bool IsFractured { get; }
+        public int Weight { get; set; }
+        public bool IsMetaItem { get; set; }
+
+
+        public override string ToString()
+        {
+            return $"{BaseName} ({ClassName}) W: {Weight} Dist: {Distance}";
+        }
     }
 }
