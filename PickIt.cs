@@ -39,8 +39,8 @@ namespace PickIt
         public override bool Initialise()
         {
             Plugin = this;
+            _currentLabels = new TimeCache<List<CustomItem>>(UpdateCurrentLabels, 500); // alexs idea <3
 
-            _currentLabels = new TimeCache<List<CustomItem>>(UpdateCurrentLabels, 500);
 
             #region Register keys
 
@@ -139,11 +139,11 @@ namespace PickIt
             var rect = new RectangleF(window.X, window.X, window.X + window.Width, window.Y + window.Height);
             var labels = GameController.Game.IngameState.IngameUi.ItemsOnGroundLabelsVisible
                 .Where(x => x.Address != 0
-                    //&& x.ItemOnGround?.Path != null 
-                    //&& x.IsVisible 
-                    //&& x.Label.GetClientRectCache.Center.PointInRectangle(rect) 
-                    //&& x.CanPickUp 
-                    //&& x.MaxTimeForPickUp.TotalSeconds <= 0
+                    && x.ItemOnGround?.Path != null 
+                    && x.IsVisible 
+                    && x.Label.GetClientRectCache.Center.PointInRectangle(rect) 
+                    //&& x.CanPickUp // broken in 3.15
+                    && x.MaxTimeForPickUp.TotalSeconds <= 0
                     )
                 .Select(x => new CustomItem(x, GameController.Files,
                     x.ItemOnGround.DistancePlayer, _weightsRules))
