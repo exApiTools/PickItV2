@@ -858,10 +858,20 @@ namespace PickIt
 
         private bool IsPortalTargeted(LabelOnGround portalLabel)
         {
-            return GameController.IngameState.UIHoverElement.Address ==
-                   portalLabel.Label.Address || // this is the right one
-                   portalLabel?.ItemOnGround?.HasComponent<Targetable>() == true &&
-                   portalLabel?.ItemOnGround?.GetComponent<Targetable>()?.isTargeted == true;
+            // extra checks in case of HUD/game update. They are easy on CPU
+            return
+                GameController.IngameState.UIHover.Address == portalLabel.Address ||
+                GameController.IngameState.UIHover.Address == portalLabel.ItemOnGround.Address ||
+                GameController.IngameState.UIHover.Address == portalLabel.Label.Address ||
+                GameController.IngameState.UIHoverElement.Address == portalLabel.Address ||
+                GameController.IngameState.UIHoverElement.Address == portalLabel.ItemOnGround.Address ||
+                GameController.IngameState.UIHoverElement.Address ==
+                portalLabel.Label.Address || // this is the right one
+                GameController.IngameState.UIHoverTooltip.Address == portalLabel.Address ||
+                GameController.IngameState.UIHoverTooltip.Address == portalLabel.ItemOnGround.Address ||
+                GameController.IngameState.UIHoverTooltip.Address == portalLabel.Label.Address ||
+                portalLabel?.ItemOnGround?.HasComponent<Targetable>() == true &&
+                portalLabel?.ItemOnGround?.GetComponent<Targetable>()?.isTargeted == true;
         }
 
         private bool IsPortalNearby(LabelOnGround portalLabel, LabelOnGround pickItItem)
