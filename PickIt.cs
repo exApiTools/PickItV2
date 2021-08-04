@@ -34,6 +34,7 @@ namespace PickIt
     {
         private const string PickitRuleDirectory = "Pickit Rules";
         private TimeCache<List<CustomItem>> UpdateCacheList { get; set; }
+        private TimeCache<List<LabelOnGround>> ChestLabelCacheList { get; set; }
         private readonly List<Entity> _entities = new List<Entity>();
         private readonly Stopwatch _pickUpTimer = Stopwatch.StartNew();
         private readonly Stopwatch _debugTimer = Stopwatch.StartNew();
@@ -93,6 +94,7 @@ namespace PickIt
             _debugTimer.Reset();
             _workCoroutine = new WaitTime(Settings.ExtraDelay);
             Settings.ExtraDelay.OnValueChanged += (sender, i) => _workCoroutine = new WaitTime(i);
+            ChestLabelCacheList = new TimeCache<List<LabelOnGround>>(UpdateChestList, 200);
             LoadRuleFiles();
             LoadCustomItems();
             return true;
@@ -223,6 +225,7 @@ namespace PickIt
                     ImGui.TreePop();
                 }
                 Settings.HeistItems.Value = ImGuiExtension.Checkbox("Heist Items", Settings.HeistItems);
+                Settings.ExpeditionChests.Value = ImGuiExtension.Checkbox("Expedition Chests", Settings.ExpeditionChests);
 
                 Settings.Rares.Value = ImGuiExtension.Checkbox("##Rares", Settings.Rares);
                 ImGui.SameLine();
@@ -715,6 +718,13 @@ namespace PickIt
             }
         }
         
+        private List<LabelOnGround> UpdateChestList() =>
+            GameController?.Game?.IngameState?.IngameUi?.ItemsOnGroundLabelsVisible.Where(x => x.Address != 0 &&
+                x.ItemOnGround?.Path != null &&
+                x.IsVisible &&
+                x.CanPickUp && x.ItemOnGround.Path.Contains("LeaguesExpedition/LeagueFaction") &&
+                x.ItemOnGround.HasComponent<Chest>()).OrderBy(x => x.ItemOnGround.DistancePlayer).ToList();
+
         private IEnumerator FindItemToPick()
         {
             if (!GameController.Window.IsForeground()) yield break;
@@ -725,10 +735,26 @@ namespace PickIt
                 DoWePickThis(x) && x.Distance < Settings.PickupRange && x.GroundItem != null &&
                 rectangleOfGameWindow.Intersects(new RectangleF(x.LabelOnGround.Label.GetClientRectCache.Center.X + rectangleOfGameWindow.X,
                     x.LabelOnGround.Label.GetClientRectCache.Center.Y, 3, 3)) && Misc.CanFitInventory(x));
-            if (_enabled ||
-                Input.GetKeyState(Settings.PickUpKey.Value) ||
+
+            if (_enabled || Input.GetKeyState(Settings.PickUpKey.Value) ||
                 CanLazyLoot() && ShouldLazyLoot(pickUpThisItem))
             {
+                if (Settings.ExpeditionChests.Value)
+                {
+                    var chestLabel = ChestLabelCacheList?.Value.FirstOrDefault(x =>
+                        x.ItemOnGround.DistancePlayer < Settings.PickupRange && x.ItemOnGround != null &&
+                        rectangleOfGameWindow.Intersects(new RectangleF(x.Label.GetClientRectCache.Center.X,
+                            x.Label.GetClientRectCache.Center.Y, 3, 3)));
+
+                    if (chestLabel != null && (pickUpThisItem == null || pickUpThisItem.Distance >= chestLabel.ItemOnGround.DistancePlayer))
+                    {
+                        yield return TryToOpenExpeditionChest(chestLabel);
+                        _fullWork = true;
+                        yield break;
+                    }
+                
+                }
+                
                 yield return TryToPickV2(pickUpThisItem, portalLabel);
                 _fullWork = true;
             }
@@ -904,6 +930,61 @@ namespace PickIt
             return labelQuery.FirstOrDefault();
         }
         
+        private IEnumerator TryToOpenExpeditionChest(LabelOnGround labelOnGround)
+        {
+            if (labelOnGround == null)
+                yield break;
+
+            var centerOfItemLabel = labelOnGround.Label.GetClientRectCache.Center;
+            var rectangleOfGameWindow = GameController.Window.GetWindowRectangleTimeCache;
+
+            _clickWindowOffset = rectangleOfGameWindow.TopLeft;
+            rectangleOfGameWindow.Inflate(-36, -36);
+            centerOfItemLabel.X += rectangleOfGameWindow.Left;
+            centerOfItemLabel.Y += rectangleOfGameWindow.Top;
+            if (!rectangleOfGameWindow.Intersects(new RectangleF(centerOfItemLabel.X, centerOfItemLabel.Y, 3, 3)))
+                yield break;
+
+            var tryCount = 0;
+
+            while (tryCount < 3)
+            {
+                var completeItemLabel = labelOnGround.Label;
+
+                if (completeItemLabel == null)
+                {
+                    if (tryCount > 0)
+                        yield break;
+
+                    yield break;
+                }
+                
+                var clientRect = completeItemLabel.GetClientRect();
+
+                var clientRectCenter = clientRect.Center;
+
+                var vector2 = clientRectCenter + _clickWindowOffset;
+
+                if (!rectangleOfGameWindow.Intersects(new RectangleF(vector2.X, vector2.Y, 3, 3)))
+                    yield break;
+
+                Input.SetCursorPos(vector2);
+                yield return new WaitTime(25);
+                Input.Click(MouseButtons.Left);
+                
+                yield return _toPick;
+                tryCount++;
+            }
+
+            tryCount = 0;
+
+            while (GameController.Game.IngameState.IngameUi.ItemsOnGroundLabelsVisible.FirstOrDefault(
+                       x => x.Address == labelOnGround.Address) != null && tryCount < 6)
+            {
+                tryCount++;
+            }
+        }
+
         #region (Re)Loading Rules
 
         private void LoadRuleFiles()

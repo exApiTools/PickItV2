@@ -44,6 +44,7 @@ namespace PickIt
             WarlordItems = new ToggleNode(true);
             FracturedItems = new ToggleNode(true);
             HeistItems = new ToggleNode(true);
+            ExpeditionChests = new ToggleNode(true);
             Rares = new ToggleNode(true);
             RareJewels = new ToggleNode(true);
             RareRings = new ToggleNode(true);
@@ -94,6 +95,7 @@ namespace PickIt
         public ToggleNode RedeemerItems { get; set; }
         public ToggleNode FracturedItems { get; set; }
         public ToggleNode HeistItems { get; set; }
+        public ToggleNode ExpeditionChests { get; set; }
         public ToggleNode Rares { get; set; }
         public ToggleNode RareJewels { get; set; }
         public ToggleNode RareRings { get; set; }
