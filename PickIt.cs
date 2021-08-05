@@ -700,8 +700,7 @@ namespace PickIt
             {
                 return labels.Where(x => x.Address != 0 && x.ItemOnGround?.Path != null && x.IsVisible
                              && x.Label.GetClientRectCache.Center.PointInRectangle(rect)
-                             // && x.CanPickUp // broken in 3.15
-                             && x.MaxTimeForPickUp.TotalSeconds <= 0)
+                             && x.CanPickUp && x.MaxTimeForPickUp.TotalSeconds <= 0)
                     .Select(x => new CustomItem(x, GameController.Files, x.ItemOnGround.DistancePlayer,
                             _weightsRules))
                     .OrderByDescending(x => x.Weight).ThenBy(x => x.Distance).ToList();
@@ -710,8 +709,7 @@ namespace PickIt
             {
                 return labels.Where(x => x.Address != 0 && x.ItemOnGround?.Path != null && x.IsVisible
                              && x.Label.GetClientRectCache.Center.PointInRectangle(rect)
-                             // && x.CanPickUp // broken in 3.15
-                             && x.MaxTimeForPickUp.TotalSeconds <= 0)
+                             && x.CanPickUp && x.MaxTimeForPickUp.TotalSeconds <= 0)
                     .Select(x => new CustomItem(x, GameController.Files, x.ItemOnGround.DistancePlayer,
                             _weightsRules))
                     .OrderBy(x => x.Distance).ToList();
