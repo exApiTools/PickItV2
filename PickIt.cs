@@ -720,7 +720,7 @@ namespace PickIt
             GameController?.Game?.IngameState?.IngameUi?.ItemsOnGroundLabelsVisible.Where(x => x.Address != 0 &&
                 x.ItemOnGround?.Path != null &&
                 x.IsVisible &&
-                x.CanPickUp && x.ItemOnGround.Path.Contains("LeaguesExpedition/LeagueFaction") &&
+                x.CanPickUp && x.ItemOnGround.Path.Contains("LeaguesExpedition") &&
                 x.ItemOnGround.HasComponent<Chest>()).OrderBy(x => x.ItemOnGround.DistancePlayer).ToList();
 
         private IEnumerator FindItemToPick()
