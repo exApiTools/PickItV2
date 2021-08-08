@@ -132,6 +132,7 @@ namespace PickIt
             Settings.PickUpKey = ImGuiExtension.HotkeySelector("Pickup Key: " + Settings.PickUpKey.Value.ToString(), Settings.PickUpKey);
             Settings.LeftClickToggleNode.Value = ImGuiExtension.Checkbox("Mouse Button: " + (Settings.LeftClickToggleNode ? "Left" : "Right"), Settings.LeftClickToggleNode);
             Settings.LeftClickToggleNode.Value = ImGuiExtension.Checkbox("Return Mouse To Position Before Click", Settings.ReturnMouseToBeforeClickPosition);
+            Settings.PickUpEvenInventoryFull.Value = ImGuiExtension.Checkbox("Try to pickup even if the item does not fit in the inventory", Settings.PickUpEvenInventoryFull);
             Settings.GroundChests.Value = ImGuiExtension.Checkbox("Click Chests If No Items Around", Settings.GroundChests);
             Settings.PickupRange.Value = ImGuiExtension.IntSlider("Pickup Radius", Settings.PickupRange);
             Settings.ChestRange.Value = ImGuiExtension.IntSlider("Chest Radius", Settings.ChestRange);
@@ -140,6 +141,8 @@ namespace PickIt
             //Settings.OverrideItemPickup.Value = ImGuiExtension.Checkbox("Item Pickup Override", Settings.OverrideItemPickup); ImGui.SameLine();
             //ImGuiExtension.ToolTip("Override item.CanPickup\n\rDO NOT enable this unless you know what you're doing!");
             Settings.LazyLooting.Value = ImGuiExtension.Checkbox("Use Lazy Looting", Settings.LazyLooting);
+            if (Settings.LazyLooting)
+                Settings.NoLazyLootingWhileEnemyClose.Value = ImGuiExtension.Checkbox("No lazy looting while enemy is close", Settings.NoLazyLootingWhileEnemyClose);
             Settings.LazyLootingPauseKey.Value = ImGuiExtension.HotkeySelector("Pause lazy looting for 2 sec: " + Settings.LazyLootingPauseKey.Value, Settings.LazyLootingPauseKey);
             
             var tempRef = false;
@@ -198,6 +201,7 @@ namespace PickIt
                 {
                     Settings.UseWeight.Value = ImGuiExtension.Checkbox("Use Weight", Settings.UseWeight);
                     Settings.IgnoreScrollOfWisdom.Value = ImGuiExtension.Checkbox("Ignore Scroll Of Wisdom", Settings.IgnoreScrollOfWisdom);
+                    Settings.IgnorePortalScroll.Value = ImGuiExtension.Checkbox("Ignore Portal Scroll", Settings.IgnorePortalScroll);
                     Settings.PickUpEverything.Value = ImGuiExtension.Checkbox("Pickup Everything", Settings.PickUpEverything);
                     Settings.AllDivs.Value = ImGuiExtension.Checkbox("All Divination Cards", Settings.AllDivs);
                     Settings.AllCurrency.Value = ImGuiExtension.Checkbox("All Currency", Settings.AllCurrency);
@@ -423,10 +427,16 @@ namespace PickIt
 
                 if (Settings.AllCurrency && item.ClassName.EndsWith("Currency"))
                 {
-                    return !item.Path.Equals("Metadata/Items/Currency/CurrencyIdentification", StringComparison.Ordinal) ||
-                           !Settings.IgnoreScrollOfWisdom;
+                    switch (item.Path)
+                    {
+                        case "Metadata/Items/Currency/CurrencyIdentification":
+                            return !Settings.IgnoreScrollOfWisdom;
+                        case "Metadata/Items/Currency/CurrencyPortal":
+                            return !Settings.IgnorePortalScroll;
+                        default:
+                            return true;
+                    }
                 }
-
                 #endregion
 
                 #region Shaper & Elder
@@ -732,7 +742,7 @@ namespace PickIt
             var pickUpThisItem = _currentLabels.Value.FirstOrDefault(x =>
                 DoWePickThis(x) && x.Distance < Settings.PickupRange && x.GroundItem != null &&
                 rectangleOfGameWindow.Intersects(new RectangleF(x.LabelOnGround.Label.GetClientRectCache.Center.X + rectangleOfGameWindow.X,
-                    x.LabelOnGround.Label.GetClientRectCache.Center.Y, 3, 3)) && Misc.CanFitInventory(x));
+                    x.LabelOnGround.Label.GetClientRectCache.Center.Y, 3, 3)) && (Settings.PickUpEvenInventoryFull ? true : Misc.CanFitInventory(x)));
 
             if (_enabled || Input.GetKeyState(Settings.PickUpKey.Value) ||
                 CanLazyLoot() && ShouldLazyLoot(pickUpThisItem))
@@ -766,7 +776,12 @@ namespace PickIt
         {
             if (!Settings.LazyLooting) return false;
             if (DisableLazyLootingTill > DateTime.Now) return false;
-            
+            try { if (Settings.NoLazyLootingWhileEnemyClose && GameController.EntityListWrapper.ValidEntitiesByType[EntityType.Monster]
+                    .Any(x => x != null && x.GetComponent<Monster>() != null && x.IsValid && x.IsHostile && x.IsAlive
+                    && !x.IsHidden && !x.Path.Contains("ElementalSummoned")
+                    && Vector3.Distance(GameController.Player.Pos, x.GetComponent<Render>().Pos) < Settings.PickupRange)) return false;
+            } catch (NullReferenceException) { };
+
             return true;
         }
         

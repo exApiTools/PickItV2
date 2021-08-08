@@ -24,6 +24,7 @@ namespace PickIt
             AllDivs = new ToggleNode(true);
             AllCurrency = new ToggleNode(true);
             IgnoreScrollOfWisdom = new ToggleNode(true);
+            IgnorePortalScroll = new ToggleNode(true);
             AllUniques = new ToggleNode(true);
             Maps = new ToggleNode(true);
             UniqueMap = new ToggleNode(true);
@@ -134,6 +135,7 @@ namespace PickIt
         public ToggleNode AllDivs { get; set; }
         public ToggleNode AllCurrency { get; set; }
         public ToggleNode IgnoreScrollOfWisdom { get; set; }
+        public ToggleNode IgnorePortalScroll { get; set; }
         public ToggleNode AllUniques { get; set; }
         public ToggleNode Maps { get; set; }
         public RangeNode<int> MapTier { get; set; }
@@ -158,9 +160,11 @@ namespace PickIt
         public Vector2 InventorySlotsVector2 { get; set; } = new Vector2(0,0);
         public RangeNode<float> MouseSpeed { get; set; }
         public ToggleNode ReturnMouseToBeforeClickPosition { get; set; } = new ToggleNode(true);
+        public ToggleNode PickUpEvenInventoryFull { get; set; } = new ToggleNode(false);
         public RangeNode<int> TimeBeforeNewClick { get; set; } = new RangeNode<int>(500, 0, 1500);
         public ToggleNode UseWeight { get; set; } = new ToggleNode(false);
         public ToggleNode LazyLooting { get; set; } = new ToggleNode(false);
+        public ToggleNode NoLazyLootingWhileEnemyClose { get; set; } = new ToggleNode(false);
         public HotkeyNode LazyLootingPauseKey { get; set; } = new HotkeyNode(Keys.Space);
 
         public ToggleNode FullRareSetManagerOverride { get; set; } = new ToggleNode(false);
