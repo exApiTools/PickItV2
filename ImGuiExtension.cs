@@ -48,56 +48,56 @@ namespace Random_Features.Libs
         public static float FloatSlider(string labelString, float value, float minValue, float maxValue)
         {
             var refValue = value;
-            ImGui.SliderFloat(labelString, ref refValue, minValue, maxValue, "%.00f", 1f);
+            ImGui.SliderFloat(labelString, ref refValue, minValue, maxValue, "%.00f");
             return refValue;
         }
 
-        public static float FloatSlider(string labelString, float value, float minValue, float maxValue, float power)
+        public static float FloatSlider(string labelString, float value, float minValue, float maxValue, ImGuiSliderFlags flags)
         {
             var refValue = value;
-            ImGui.SliderFloat(labelString, ref refValue, minValue, maxValue, "%.00f", power);
+            ImGui.SliderFloat(labelString, ref refValue, minValue, maxValue, "%.00f", flags);
             return refValue;
         }
 
         public static float FloatSlider(string labelString, string sliderString, float value, float minValue, float maxValue)
         {
             var refValue = value;
-            ImGui.SliderFloat(labelString, ref refValue, minValue, maxValue, $"{sliderString}: {value}", 1f);
+            ImGui.SliderFloat(labelString, ref refValue, minValue, maxValue, $"{sliderString}: {value}");
             return refValue;
         }
 
-        public static float FloatSlider(string labelString, string sliderString, float value, float minValue, float maxValue, float power)
+        public static float FloatSlider(string labelString, string sliderString, float value, float minValue, float maxValue, ImGuiSliderFlags flags)
         {
             var refValue = value;
-            ImGui.SliderFloat(labelString, ref refValue, minValue, maxValue, $"{sliderString}: {value}", power);
+            ImGui.SliderFloat(labelString, ref refValue, minValue, maxValue, $"{sliderString}: {value}", flags);
             return refValue;
         }
 
         public static float FloatSlider(string labelString, RangeNode<float> setting)
         {
             var refValue = setting.Value;
-            ImGui.SliderFloat(labelString, ref refValue, setting.Min, setting.Max, "%.00f", 1f);
+            ImGui.SliderFloat(labelString, ref refValue, setting.Min, setting.Max, "%.00f");
             return refValue;
         }
 
-        public static float FloatSlider(string labelString, RangeNode<float> setting, float power)
+        public static float FloatSlider(string labelString, RangeNode<float> setting, ImGuiSliderFlags flags)
         {
             var refValue = setting.Value;
-            ImGui.SliderFloat(labelString, ref refValue, setting.Min, setting.Max, "%.00f", power);
+            ImGui.SliderFloat(labelString, ref refValue, setting.Min, setting.Max, "%.00f", flags);
             return refValue;
         }
 
         public static float FloatSlider(string labelString, string sliderString, RangeNode<float> setting)
         {
             var refValue = setting.Value;
-            ImGui.SliderFloat(labelString, ref refValue, setting.Min, setting.Max, $"{sliderString}: {setting.Value}", 1f);
+            ImGui.SliderFloat(labelString, ref refValue, setting.Min, setting.Max, $"{sliderString}: {setting.Value}");
             return refValue;
         }
 
-        public static float FloatSlider(string labelString, string sliderString, RangeNode<float> setting, float power)
+        public static float FloatSlider(string labelString, string sliderString, RangeNode<float> setting, ImGuiSliderFlags flags)
         {
             var refValue = setting.Value;
-            ImGui.SliderFloat(labelString, ref refValue, setting.Min, setting.Max, $"{sliderString}: {setting.Value}", power);
+            ImGui.SliderFloat(labelString, ref refValue, setting.Min, setting.Max, $"{sliderString}: {setting.Value}", flags);
             return refValue;
         }
 
@@ -250,8 +250,7 @@ namespace Random_Features.Libs
         // Color menu tabs
         public static void ImGuiExtension_ColorTabs(string idString, int height, IReadOnlyList<string> settingList, ref int selectedItem, ref int uniqueIdPop)
         {
-            var newcontentRegionArea = new System.Numerics.Vector2();
-            newcontentRegionArea = ImGuiNative.igGetContentRegionAvail();
+            var newcontentRegionArea = ImGui.GetContentRegionAvail();
             var boxRegion = new ImGuiVector2(newcontentRegionArea.X, height);
             if (ImGui.BeginChild(idString, boxRegion, true, ImGuiWindowFlags.HorizontalScrollbar))
             {
