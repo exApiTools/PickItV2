@@ -4,7 +4,6 @@ using System.Diagnostics;
 using System.Linq;
 using System.Windows.Forms;
 using ExileCore;
-using ExileCore.PoEMemory;
 using ExileCore.PoEMemory.Components;
 using ExileCore.PoEMemory.Elements;
 using ExileCore.PoEMemory.MemoryObjects;
@@ -15,13 +14,7 @@ using ImGuiNET;
 using Random_Features.Libs;
 using SharpDX;
 using System;
-using System.Collections;
-using System.Collections.Generic;
-using System.Diagnostics;
 using System.IO;
-using System.Linq;
-using System.Windows.Forms;
-using ExileCore.PoEMemory.Elements;
 using Newtonsoft.Json;
 using Input = ExileCore.Input;
 using nuVector2 = System.Numerics.Vector2;
@@ -33,10 +26,7 @@ namespace PickIt
     public class PickIt : BaseSettingsPlugin<PickItSettings>
     {
         private const string PickitRuleDirectory = "Pickit Rules";
-        private TimeCache<List<CustomItem>> UpdateCacheList { get; set; }
         private TimeCache<List<LabelOnGround>> ChestLabelCacheList { get; set; }
-        private readonly List<Entity> _entities = new List<Entity>();
-        private readonly Stopwatch _pickUpTimer = Stopwatch.StartNew();
         private readonly Stopwatch _debugTimer = Stopwatch.StartNew();
         private readonly WaitTime _toPick = new WaitTime(1);
         private readonly WaitTime _wait2Ms = new WaitTime(2);
@@ -48,17 +38,9 @@ namespace PickIt
         private HashSet<string> _ignoreRules;
         private Dictionary<string, int> _weightsRules = new Dictionary<string, int>();
         private WaitTime _workCoroutine;
-        public DateTime buildDate;
         private uint coroutineCounter;
         private bool _fullWork = true;
-        public string MagicRuleFile;
-        private WaitTime mainWorkCoroutine = new WaitTime(5);
-        public string NormalRuleFile;
         private Coroutine _pickItCoroutine;
-        public string RareRuleFile;
-        private WaitTime tryToPick = new WaitTime(7);
-        public string UniqueRuleFile;
-        private WaitTime waitPlayerMove = new WaitTime(10);
         private List<string> _customItems = new List<string>();
         public int[,] inventorySlots { get; set; } = new int[0,0];
         public ServerInventory InventoryItems { get; set; }
@@ -93,7 +75,7 @@ namespace PickIt
             _pickItCoroutine.Pause();
             _debugTimer.Reset();
             _workCoroutine = new WaitTime(Settings.ExtraDelay);
-            Settings.ExtraDelay.OnValueChanged += (sender, i) => _workCoroutine = new WaitTime(i);
+            Settings.ExtraDelay.OnValueChanged += (_, i) => _workCoroutine = new WaitTime(i);
             ChestLabelCacheList = new TimeCache<List<LabelOnGround>>(UpdateChestList, 200);
             LoadRuleFiles();
             LoadCustomItems();
@@ -144,11 +126,11 @@ namespace PickIt
             if (Settings.LazyLooting)
                 Settings.NoLazyLootingWhileEnemyClose.Value = ImGuiExtension.Checkbox("No lazy looting while enemy is close", Settings.NoLazyLootingWhileEnemyClose);
             Settings.LazyLootingPauseKey.Value = ImGuiExtension.HotkeySelector("Pause lazy looting for 2 sec: " + Settings.LazyLootingPauseKey.Value, Settings.LazyLootingPauseKey);
-            
-            var tempRef = false;
+
             if (ImGui.CollapsingHeader("Pickit Rules", ImGuiTreeNodeFlags.Framed | ImGuiTreeNodeFlags.DefaultOpen))
             {
                 if (ImGui.Button("Reload All Files")) LoadRuleFiles();
+                bool tempRef;
                 Settings.NormalRuleFile = ImGuiExtension.ComboBox("Normal Rules", Settings.NormalRuleFile, PickitFiles, out tempRef);
                 if (tempRef) _normalRules = LoadPickit(Settings.NormalRuleFile);
                 Settings.MagicRuleFile = ImGuiExtension.ComboBox("Magic Rules", Settings.MagicRuleFile, PickitFiles, out tempRef);
@@ -742,7 +724,7 @@ namespace PickIt
             var pickUpThisItem = _currentLabels.Value.FirstOrDefault(x =>
                 DoWePickThis(x) && x.Distance < Settings.PickupRange && x.GroundItem != null &&
                 rectangleOfGameWindow.Intersects(new RectangleF(x.LabelOnGround.Label.GetClientRectCache.Center.X + rectangleOfGameWindow.X,
-                    x.LabelOnGround.Label.GetClientRectCache.Center.Y, 3, 3)) && (Settings.PickUpEvenInventoryFull ? true : Misc.CanFitInventory(x)));
+                    x.LabelOnGround.Label.GetClientRectCache.Center.Y, 3, 3)) && (Settings.PickUpEvenInventoryFull || Misc.CanFitInventory(x)));
 
             if (_enabled || Input.GetKeyState(Settings.PickUpKey.Value) ||
                 CanLazyLoot() && ShouldLazyLoot(pickUpThisItem))
@@ -777,10 +759,10 @@ namespace PickIt
             if (!Settings.LazyLooting) return false;
             if (DisableLazyLootingTill > DateTime.Now) return false;
             try { if (Settings.NoLazyLootingWhileEnemyClose && GameController.EntityListWrapper.ValidEntitiesByType[EntityType.Monster]
-                    .Any(x => x != null && x.GetComponent<Monster>() != null && x.IsValid && x.IsHostile && x.IsAlive
+                    .Any(x => x?.GetComponent<Monster>() != null && x.IsValid && x.IsHostile && x.IsAlive
                     && !x.IsHidden && !x.Path.Contains("ElementalSummoned")
                     && Vector3.Distance(GameController.Player.Pos, x.GetComponent<Render>().Pos) < Settings.PickupRange)) return false;
-            } catch (NullReferenceException) { };
+            } catch (NullReferenceException) { }
 
             return true;
         }
@@ -1066,7 +1048,7 @@ namespace PickIt
                 }
                 catch (Exception e)
                 {
-                    DebugWindow.LogError($"{nameof(PickIt)} => Error when parse weight.");
+                    DebugWindow.LogError($"{nameof(PickIt)} => Error when parsing weight: {e}");
                 }
             }
 

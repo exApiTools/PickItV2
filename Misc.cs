@@ -1,21 +1,13 @@
 using System;
 using System.Linq;
-using System.Net;
-using System.Runtime.CompilerServices;
-using System.Runtime.InteropServices;
-using System.Windows.Forms;
-using System.Windows.Forms.VisualStyles;
-using ExileCore;
 using ExileCore.PoEMemory.Components;
 using ExileCore.PoEMemory.MemoryObjects;
-using ExileCore.Shared.Enums;
 using SharpDX;
 
 namespace PickIt
 {
     public class Misc
     {
-
         public static bool CanFitInventory(CustomItem groundItem)
         {
             return FindSpotInventory(groundItem) != new Vector2(-1, -1);

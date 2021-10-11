@@ -22,11 +22,10 @@ namespace PickIt
             Distance = distance;
             var itemItemOnGround = item.ItemOnGround;
             var worldItem = itemItemOnGround?.GetComponent<WorldItem>();
-            if (worldItem == null) return;
-            var groundItem = worldItem.ItemEntity;
+            var groundItem = worldItem?.ItemEntity;
+            if (groundItem == null) return;
             GroundItem = groundItem;
-            Path = groundItem?.Path;
-            if (GroundItem == null) return;
+            Path = groundItem.Path;
 
             if (Path != null && Path.Length < 1)
             {
@@ -35,7 +34,7 @@ namespace PickIt
                 return;
             }
 
-            IsTargeted = () => itemItemOnGround?.GetComponent<Targetable>()?.isTargeted == true;
+            IsTargeted = () => itemItemOnGround.GetComponent<Targetable>()?.isTargeted == true;
 
             var baseItemType = fs.BaseItemTypes.Translate(Path);
 
@@ -48,24 +47,6 @@ namespace PickIt
                 if (weightsRules.TryGetValue(BaseName, out var w)) Weight = w;
                 if (ClassName.StartsWith("Heist")) IsHeist = true;
             }
-
-            var WeaponClass = new List<string>
-            {
-                "One Hand Mace",
-                "Two Hand Mace",
-                "One Hand Axe",
-                "Two Hand Axe",
-                "One Hand Sword",
-                "Two Hand Sword",
-                "Thrusting One Hand Sword",
-                "Bow",
-                "Claw",
-                "Dagger",
-                "Rune Dagger",
-                "Sceptre",
-                "Staff",
-                "Wand"
-            };
 
             if (GroundItem.HasComponent<Quality>())
             {
@@ -90,7 +71,7 @@ namespace PickIt
                 Rarity = mods.ItemRarity;
                 IsIdentified = mods.Identified;
                 ItemLevel = mods.ItemLevel;
-                IsFractured = mods.HaveFractured;
+                IsFractured = mods.IsFractured;
                 IsVeiled = mods.ItemMods.Any(m => m.DisplayName.Contains("Veil"));
             }
 
