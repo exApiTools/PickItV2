@@ -7,10 +7,16 @@ using ExileCore.PoEMemory.Components;
 using ExileCore.PoEMemory.Elements;
 using ExileCore.PoEMemory.MemoryObjects;
 using ExileCore.Shared.Enums;
+using ExileCore.Shared.Static;
 using Map = ExileCore.PoEMemory.Components.Map;
 
 namespace PickIt
 {
+    public record SocketInfo(int LargestLinkSize, int SocketNumber, IReadOnlyCollection<IReadOnlyCollection<int>> Links);
+    public record SkillGemInfo(int Level, int MaxLevel, SkillGemQualityTypeE QualityType);
+
+    public record StackInfo(int Count, int MaxCount);
+
     public class CustomItem
     {
         public Func<bool> IsTargeted;
@@ -40,7 +46,9 @@ namespace PickIt
 
             if (baseItemType != null)
             {
-                ClassName = baseItemType.ClassName;
+                ClassName = new ItemClasses().contents.TryGetValue(baseItemType.ClassName, out var @class) 
+                                ? @class.ClassName 
+                                : baseItemType.ClassName;
                 BaseName = baseItemType.BaseName;
                 Width = baseItemType.Width;
                 Height = baseItemType.Height;
@@ -57,12 +65,7 @@ namespace PickIt
             if (GroundItem.HasComponent<Base>())
             {
                 var @base = GroundItem.GetComponent<Base>();
-                IsElder = @base.isElder;
-                IsShaper = @base.isShaper;
-                IsHunter = @base.isHunter;
-                IsRedeemer = @base.isRedeemer;
-                IsCrusader = @base.isCrusader;
-                IsWarlord = @base.isWarlord;
+                InfluenceFlags = @base.InfluenceFlag;
             }
 
             if (GroundItem.HasComponent<Mods>())
@@ -78,44 +81,48 @@ namespace PickIt
             if (GroundItem.HasComponent<Sockets>())
             {
                 var sockets = GroundItem.GetComponent<Sockets>();
-                IsRGB = sockets.IsRGB;
-                Sockets = sockets.NumberOfSockets;
-                LargestLink = sockets.LargestLinkSize;
+                SocketInfo = new SocketInfo(sockets.LargestLinkSize, sockets.NumberOfSockets, sockets.Links);
+            }
+
+            if (GroundItem.HasComponent<SkillGem>())
+            {
+                var gem = GroundItem.GetComponent<SkillGem>();
+                GemInfo = new SkillGemInfo(gem.Level, gem.MaxLevel, gem.QualityType);
+            }
+            
+            if (GroundItem.HasComponent<Stack>())
+            {
+                var stack = GroundItem.GetComponent<Stack>();
+                StackInfo = new StackInfo(stack.Size, stack.Info.MaxStackSize);
             }
 
             if (GroundItem.HasComponent<Weapon>()) IsWeapon = true;
 
-            MapTier = GroundItem.HasComponent<Map>() ? GroundItem.GetComponent<Map>().Tier : 0;
+            MapTier = GroundItem.GetComponent<Map>()?.Tier;
             IsValid = true;
         }
 
-
+        public Influence? InfluenceFlags { get; }
+        public SkillGemInfo GemInfo { get; }
+        public StackInfo StackInfo { get; }
+        public SocketInfo SocketInfo { get; }
         public string BaseName { get; } = "";
         public string ClassName { get; } = "";
         public LabelOnGround LabelOnGround { get; }
         public float Distance { get; }
         public Entity GroundItem { get; }
 
-        public MinimapIcon WorldIcon { get;}
+        public MinimapIcon WorldIcon { get; }
         public int Height { get; }
-        public bool IsElder { get; }
         public bool IsIdentified { get; }
-        public bool IsRGB { get; }
-        public bool IsShaper { get; }
-        public bool IsHunter { get; }
-        public bool IsRedeemer { get; }
-        public bool IsCrusader { get; }
-        public bool IsWarlord { get; }
         public bool IsHeist { get; }
         public bool IsVeiled { get; }
         public bool IsWeapon { get; }
         public int ItemLevel { get; }
-        public int LargestLink { get; }
-        public int MapTier { get; }
+        public int? MapTier { get; }
         public string Path { get; }
         public int Quality { get; }
         public ItemRarity Rarity { get; }
-        public int Sockets { get; }
         public int Width { get; }
         public bool IsFractured { get; }
         public int Weight { get; set; }

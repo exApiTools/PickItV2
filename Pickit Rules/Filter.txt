@@ -1,0 +1,27 @@
+Show
+ BaseType "Offering to the Goddess" "Dedication to the Goddess" "Gift to the Goddess" "Tribute to the Goddess"
+Show
+ Class "Currency" "Jewel" "Divination" "Incubator" "Map Fragments" "Blueprint" "Contract" "Maps" "Trinkets"
+Show
+ Class "Amulets" "Rings"
+Show
+ LinkedSockets 6
+Show
+ Class "Gems"
+ BaseType "Empower" "Enhance" "Enlighten" "Item Quantity" "Portal" "Vaal Breach"
+Show
+ Class "Gems"
+ Quality >= 10
+Show
+ Class "Gems"
+ GemLevel >= 15
+Show
+ GemQualityType Divergent Anomalous Phantasmal
+Show
+ Class "Heist Target" "Metamorph" "Labyrinth" "Incursion Item" "Atlas Region Upgrade Item" "Pantheon Soul" "Quest" "Fishing Rod"
+Show
+ BaseType "Maven's" "Ancient Reliquary Key" "Timeworn Reliquary Key" "Vaal Reliquary Key" "Inscribed Ultimatum" "Chronicle of Atzoatl" "Misc Map Items" "Watchstone"
+Show
+ ItemLevel >= 75
+ HasInfluence Crusader
+ Rarity <= Rare
