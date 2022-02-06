@@ -21,11 +21,10 @@ namespace PickIt
     {
         public Func<bool> IsTargeted;
         public bool IsValid;
-
-        public CustomItem(LabelOnGround item, FilesContainer fs, float distance, Dictionary<string, int> weightsRules)
+        public int AttemptedPickups = 0;
+        public CustomItem(LabelOnGround item, FilesContainer fs, Dictionary<string, int> weightsRules)
         {
             LabelOnGround = item;
-            Distance = distance;
             var itemItemOnGround = item.ItemOnGround;
             var worldItem = itemItemOnGround?.GetComponent<WorldItem>();
             var groundItem = worldItem?.ItemEntity;
@@ -109,7 +108,7 @@ namespace PickIt
         public string BaseName { get; } = "";
         public string ClassName { get; } = "";
         public LabelOnGround LabelOnGround { get; }
-        public float Distance { get; }
+        public float Distance => LabelOnGround.ItemOnGround?.DistancePlayer ?? float.PositiveInfinity;
         public Entity GroundItem { get; }
 
         public MinimapIcon WorldIcon { get; }

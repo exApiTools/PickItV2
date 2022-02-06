@@ -18,11 +18,12 @@ using System.IO;
 using System.Text.RegularExpressions;
 using System.Threading;
 using System.Threading.Tasks;
-using ExileCore.PoEMemory;
 using Input = ExileCore.Input;
 using nuVector2 = System.Numerics.Vector2;
 using ExileCore.Shared.Enums;
 using FilterCore;
+using MoreLinq;
+using MoreLinq.Extensions;
 
 // ReSharper disable ConstantConditionalAccessQualifier
 
@@ -40,14 +41,16 @@ namespace PickIt
         private uint coroutineCounter;
         private bool _fullWork = true;
         private Coroutine _pickItCoroutine;
-        public int[,] inventorySlots { get; set; } = new int[0,0];
         public ServerInventory InventoryItems { get; set; }
+        private readonly CachedValue<int[,]> inventorySlotsCache;
+        public int[,] InventorySlots => inventorySlotsCache.Value;
         public static PickIt Controller { get; set; }
         private TimeCache<List<CustomItem>> _currentLabels;
 
         public PickIt()
         {
             Name = "Pickit";
+            inventorySlotsCache = new FrameCache<int[,]>(() => Misc.GetContainer2DArray(InventoryItems));
         }
 
         private List<string> PickitFiles { get; set; }
@@ -106,6 +109,12 @@ namespace PickIt
 
         private WorkMode GetWorkMode()
         {
+            if (!GameController.Window.IsForeground() ||
+                !Settings.Enable)
+            {
+                return WorkMode.Stop;
+            }
+
             if (Input.GetKeyState(Settings.PickUpKey.Value))
             {
                 return WorkMode.Manual;
@@ -124,7 +133,7 @@ namespace PickIt
             Settings.ShowInventoryView.Value = ImGuiExtension.Checkbox("Show Inventory Slots", Settings.ShowInventoryView.Value);
             Settings.MoveInventoryView.Value = ImGuiExtension.Checkbox("Moveable Inventory Slots", Settings.MoveInventoryView.Value);
 
-            Settings.PickUpKey = ImGuiExtension.HotkeySelector("Pickup Key: " + Settings.PickUpKey.Value.ToString(), Settings.PickUpKey);
+            Settings.PickUpKey = ImGuiExtension.HotkeySelector("Pickup Key: " + Settings.PickUpKey.Value, Settings.PickUpKey);
             Settings.LeftClickToggleNode.Value = ImGuiExtension.Checkbox("Mouse Button: " + (Settings.LeftClickToggleNode ? "Left" : "Right"), Settings.LeftClickToggleNode);
             Settings.PickUpEvenInventoryFull.Value = ImGuiExtension.Checkbox("Try to pickup even if the item does not fit in the inventory", Settings.PickUpEvenInventoryFull);
             Settings.PickupRange.Value = ImGuiExtension.IntSlider("Pickup Radius", Settings.PickupRange);
@@ -134,37 +143,25 @@ namespace PickIt
                 Settings.NoLazyLootingWhileEnemyClose.Value = ImGuiExtension.Checkbox("No lazy looting while enemy is close", Settings.NoLazyLootingWhileEnemyClose);
             Settings.LazyLootingPauseKey.Value = ImGuiExtension.HotkeySelector("Pause lazy looting for 2 sec: " + Settings.LazyLootingPauseKey.Value, Settings.LazyLootingPauseKey);
 
-            if (ImGui.CollapsingHeader("Pickit Rules", ImGuiTreeNodeFlags.Framed | ImGuiTreeNodeFlags.DefaultOpen))
-            {
-                if (ImGui.Button("Reload All Files")) LoadRuleFiles();
-                bool tempRef;
-                Settings.FilterFile = ImGuiExtension.ComboBox("Item filter file", Settings.FilterFile, PickitFiles, out tempRef);
-                if (tempRef) LoadRuleFiles();
-                if (tempRef) _weightsRules = LoadWeights(Settings.WeightRuleFile);
-            }
+            if (ImGui.Button("Reload All Files")) LoadRuleFiles();
+            Settings.FilterFile = ImGuiExtension.ComboBox("Item filter file", Settings.FilterFile, PickitFiles, out var tempRef);
+            if (tempRef) LoadRuleFiles();
+            if (tempRef) _weightsRules = LoadWeights(Settings.WeightRuleFile);
 
-            if (ImGui.CollapsingHeader("Item Logic", ImGuiTreeNodeFlags.Framed | ImGuiTreeNodeFlags.DefaultOpen))
-            {
-                if (ImGui.TreeNode("Overrides"))
-                {
-                    Settings.UseWeight.Value = ImGuiExtension.Checkbox("Use Weight", Settings.UseWeight);
-                    Settings.PickUpEverything.Value = ImGuiExtension.Checkbox("Pickup Everything", Settings.PickUpEverything);
-                    ImGui.TreePop();
-                }
-                Settings.ExpeditionChests.Value = ImGuiExtension.Checkbox("Expedition Chests", Settings.ExpeditionChests);
-            }
+            Settings.UseWeight.Value = ImGuiExtension.Checkbox("Use Weight", Settings.UseWeight);
+            Settings.PickUpEverything.Value = ImGuiExtension.Checkbox("Pickup Everything", Settings.PickUpEverything);
+            Settings.ExpeditionChests.Value = ImGuiExtension.Checkbox("Expedition Chests", Settings.ExpeditionChests);
         }
 
         private DateTime DisableLazyLootingTill { get; set; }
 
         public override Job Tick()
         {
-            var playerInvCount = GameController?.Game?.IngameState?.ServerData?.PlayerInventories?.Count;
-            if (playerInvCount == null || playerInvCount == 0)
+            var playerInvCount = GameController?.Game?.IngameState?.Data?.ServerData?.PlayerInventories?.Count;
+            if (playerInvCount is null or 0)
                 return null;
 
-            InventoryItems = GameController.Game.IngameState.ServerData.PlayerInventories[0].Inventory;
-            inventorySlots = Misc.GetContainer2DArray(InventoryItems);
+            InventoryItems = GameController.Game.IngameState.Data.ServerData.PlayerInventories[0].Inventory;
             DrawIgnoredCellsSettings();
             if (Input.GetKeyState(Settings.LazyLootingPauseKey)) DisableLazyLootingTill = DateTime.Now.AddSeconds(2);
             if (Input.GetKeyState(Keys.Escape))
@@ -223,8 +220,8 @@ namespace PickIt
                 for (var i = 0; i < 5; i++)
                 for (var j = 0; j < 12; j++)
                 {
-                    var toggled = Convert.ToBoolean(inventorySlots[i, j]);
-                    if (ImGui.Checkbox($"##{_numb}IgnoredCells", ref toggled)) inventorySlots[i, j] ^= 1;
+                    var toggled = Convert.ToBoolean(InventorySlots[i, j]);
+                    if (ImGui.Checkbox($"##{_numb}IgnoredCells", ref toggled)) InventorySlots[i, j] ^= 1;
 
                     if ((_numb - 1) % 12 < 11) ImGui.SameLine();
 
@@ -260,25 +257,11 @@ namespace PickIt
             var rect = new RectangleF(window.X, window.X, window.X + window.Width, window.Y + window.Height);
             var labels = GameController.Game.IngameState.IngameUi.ItemsOnGroundLabelsVisible;
 
-            if (Settings.UseWeight)
-            {
-                return labels.Where(x => x.Address != 0 && x.ItemOnGround?.Path != null && x.IsVisible
-                             && x.Label.GetClientRectCache.Center.PointInRectangle(rect)
-                             && x.CanPickUp && x.MaxTimeForPickUp.TotalSeconds <= 0)
-                             .Select(x => new CustomItem(x, GameController.Files, x.ItemOnGround.DistancePlayer, _weightsRules))
-                             .OrderByDescending(x => x.Weight)
-                             .ThenBy(x => x.Distance)
-                             .ToList();
-            }
-            else
-            {
-                return labels.Where(x => x.Address != 0 && x.ItemOnGround?.Path != null && x.IsVisible
-                             && x.Label.GetClientRectCache.Center.PointInRectangle(rect)
-                             && x.CanPickUp && x.MaxTimeForPickUp.TotalSeconds <= 0)
-                             .Select(x => new CustomItem(x, GameController.Files, x.ItemOnGround.DistancePlayer, _weightsRules))
-                             .OrderBy(x => x.Distance)
-                             .ToList();
-            }
+            return labels?.Where(x => x.Address != 0 && x.ItemOnGround?.Path != null && x.IsVisible
+                                   && x.Label.GetClientRectCache.Center.PointInRectangle(rect)
+                                   && x.CanPickUp && x.MaxTimeForPickUp.TotalSeconds <= 0)
+                          .Select(x => new CustomItem(x, GameController.Files, _weightsRules))
+                          .ToList();
         }
         
         private List<LabelOnGround> UpdateChestList() =>
@@ -291,11 +274,15 @@ namespace PickIt
         private IEnumerator FindItemToPick()
         {
             if (!GameController.Window.IsForeground()) yield break;
-            var pickUpThisItem = _currentLabels.Value.FirstOrDefault(x => DoWePickThis(x)
-                                                                       && x.Distance < Settings.PickupRange
-                                                                       && x.GroundItem != null
-                                                                       && IsLabelClickable(x.LabelOnGround)
-                                                                       && (Settings.PickUpEvenInventoryFull || Misc.CanFitInventory(x)));
+            var pickUpThisItem = _currentLabels
+                                .Value?
+                                .Where(x => x.GroundItem != null
+                                         && x.AttemptedPickups == 0
+                                         && x.Distance < Settings.PickupRange
+                                         && IsLabelClickable(x.LabelOnGround)
+                                         && DoWePickThis(x)
+                                         && (Settings.PickUpEvenInventoryFull || Misc.CanFitInventory(x)))
+                                .MinBy(x => x.Distance);
 
             var workMode = GetWorkMode();
             if (workMode == WorkMode.Manual || workMode == WorkMode.Lazy && ShouldLazyLoot(pickUpThisItem))
@@ -322,6 +309,7 @@ namespace PickIt
                 }
                 
                 var portalLabel = GetLabel(@"Metadata/MiscellaneousObjects/.*Portal");
+                pickUpThisItem.AttemptedPickups++;
                 yield return TryToPickV2(pickUpThisItem, portalLabel);
             }
         }

@@ -4,6 +4,7 @@ Show
  Class "Currency" "Jewel" "Divination" "Incubator" "Map Fragments" "Blueprint" "Contract" "Maps" "Trinkets"
 Show
  Class "Amulets" "Rings"
+ Rarity Rare
 Show
  LinkedSockets 6
 Show
@@ -22,6 +23,6 @@ Show
 Show
  BaseType "Maven's" "Ancient Reliquary Key" "Timeworn Reliquary Key" "Vaal Reliquary Key" "Inscribed Ultimatum" "Chronicle of Atzoatl" "Misc Map Items" "Watchstone"
 Show
- ItemLevel >= 75
- HasInfluence Crusader
+ ItemLevel >= 86
+ HasInfluence Shaper Elder Crusader Redeemer Hunter Warlord
  Rarity <= Rare

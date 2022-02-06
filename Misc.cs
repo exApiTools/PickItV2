@@ -19,7 +19,7 @@ namespace PickIt
         public static Vector2 FindSpotInventory(CustomItem item)
         {
             var location = new Vector2(-1, -1);
-            var InventorySlots = PickIt.Controller.inventorySlots;
+            var InventorySlots = PickIt.Controller.InventorySlots;
             var inventoryItems = PickIt.Controller.InventoryItems.InventorySlotItems;
             var width = 12;
             var height = 5;
