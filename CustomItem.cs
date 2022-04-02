@@ -32,7 +32,7 @@ namespace PickIt
             GroundItem = groundItem;
             Path = groundItem.Path;
 
-            if (Path != null && Path.Length < 1)
+            if (Path is { Length: < 1 })
             {
                 DebugWindow.LogMsg($"World: {worldItem.Address:X} P: {Path}", 2);
                 DebugWindow.LogMsg($"Ground: {GroundItem.Address:X} P {Path}", 2);
@@ -111,7 +111,6 @@ namespace PickIt
         public float Distance => LabelOnGround.ItemOnGround?.DistancePlayer ?? float.PositiveInfinity;
         public Entity GroundItem { get; }
 
-        public MinimapIcon WorldIcon { get; }
         public int Height { get; }
         public bool IsIdentified { get; }
         public bool IsHeist { get; }
@@ -125,7 +124,6 @@ namespace PickIt
         public int Width { get; }
         public bool IsFractured { get; }
         public int Weight { get; set; }
-        public bool IsMetaItem { get; set; }
 
         public override string ToString()
         {

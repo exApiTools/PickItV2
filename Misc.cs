@@ -6,76 +6,73 @@ using SharpDX;
 
 namespace PickIt
 {
-    public class Misc
+    public partial class PickIt
     {
-        public static bool CanFitInventory(CustomItem groundItem)
+        private bool CanFitInventory(CustomItem groundItem)
         {
-            return FindSpotInventory(groundItem) != new Vector2(-1, -1);
+            return FindSpotInventory(groundItem) != null;
         }
 
-        /* Container.FindSpot(item)
-         *	Finds a spot available in the buffer to place the item.
-         */
-        public static Vector2 FindSpotInventory(CustomItem item)
+        /// <summary>
+        /// Finds a spot available in the inventory to place the item
+        /// </summary>
+        private Vector2? FindSpotInventory(CustomItem item)
         {
-            var location = new Vector2(-1, -1);
-            var InventorySlots = PickIt.Controller.InventorySlots;
-            var inventoryItems = PickIt.Controller.InventoryItems.InventorySlotItems;
-            var width = 12;
-            var height = 5;
+            var inventorySlots = InventorySlots;
+            var inventoryItems = InventoryItems.InventorySlotItems;
+            const int width = 12;
+            const int height = 5;
 
-            if (InventorySlots == null)
-                return location;
+            if (inventorySlots == null)
+                return null;
+
+            var itemToStackWith = inventoryItems.FirstOrDefault(x => CanItemBeStacked(item, x));
+            if (itemToStackWith != null)
+            {
+                return new Vector2(itemToStackWith.PosX, itemToStackWith.PosY);
+            }
 
             for (var yCol = 0; yCol < height - (item.Height - 1); yCol++)
             for (var xRow = 0; xRow < width - (item.Width - 1); xRow++)
             {
-                var success = 0;
+                var obstructed = false;
 
-                for (var xWidth = 0; xWidth < item.Width; xWidth++)
-                for (var yHeight = 0; yHeight < item.Height; yHeight++)
-                    if (InventorySlots[yCol + yHeight, xRow + xWidth] == 0)
-                        success++;
-                    else if (inventoryItems.Any(x =>
-                        x.PosX == xRow && x.PosY == yCol && CanItemBeStacked(item, x) == StackableItem.Can))
-                        success++;
+                for (var xWidth = 0; xWidth < item.Width && !obstructed; xWidth++)
+                for (var yHeight = 0; yHeight < item.Height && !obstructed; yHeight++)
+                {
+                    obstructed |= inventorySlots[yCol + yHeight, xRow + xWidth];
+                }
 
-                if (success >= item.Height * item.Width) return new Vector2(xRow, yCol);
+                if (!obstructed) return new Vector2(xRow, yCol);
             }
 
-            return location;
+            return null;
         }
 
-        public static StackableItem CanItemBeStacked(CustomItem item, ServerInventory.InventSlotItem inventoryItem)
+        private static bool CanItemBeStacked(CustomItem item, ServerInventory.InventSlotItem inventoryItem)
         {
             // return false if not the same item
             if (item.GroundItem.Path != inventoryItem.Item.Path)
-                return StackableItem.Cannot;
+                return false;
 
             // return false if the items dont have the Stack component
             // probably only need to do it on one item but for smoll brain reasons...here we go
             if (!item.GroundItem.HasComponent<Stack>() || !inventoryItem.Item.HasComponent<Stack>())
-                return StackableItem.Cannot;
+                return false;
 
             var itemStackComp = item.GroundItem.GetComponent<Stack>();
             var inventoryItemStackComp = inventoryItem.Item.GetComponent<Stack>();
 
             if (inventoryItemStackComp.Size == inventoryItemStackComp.Info.MaxStackSize ||
                 inventoryItemStackComp.Size + itemStackComp.Size > inventoryItemStackComp.Info.MaxStackSize)
-                return StackableItem.Cannot;
+                return false;
 
-            return StackableItem.Can;
+            return true;
         }
 
-        public enum StackableItem
+        private bool[,] GetContainer2DArray(ServerInventory containerItems)
         {
-            Cannot,
-            Can
-        }
-
-        public static int[,] GetContainer2DArray(ServerInventory containerItems)
-        {
-            var containerCells = new int[containerItems.Rows, containerItems.Columns];
+            var containerCells = new bool[containerItems.Rows, containerItems.Columns];
 
             try
             {
@@ -85,17 +82,19 @@ namespace PickIt
                     var itemSizeY = item.SizeY;
                     var inventPosX = item.PosX;
                     var inventPosY = item.PosY;
-                    for (var y = 0; y < itemSizeY; y++)
-                    for (var x = 0; x < itemSizeX; x++)
-                        containerCells[y + inventPosY, x + inventPosX] = 1;
+                    var startX = Math.Max(0, inventPosX);
+                    var startY = Math.Max(0, inventPosY);
+                    var endX = Math.Min(containerItems.Columns, inventPosX + itemSizeX);
+                    var endY = Math.Min(containerItems.Rows, inventPosY + itemSizeY);
+                    for (var y = startY; y < endY; y++)
+                    for (var x = startX; x < endX; x++)
+                        containerCells[y, x] = true;
                 }
-
-                return containerCells;
             }
             catch (Exception e)
             {
                 // ignored
-                PickIt.Controller.LogMessage(e.ToString(), 5);
+                LogMessage(e.ToString(), 5);
             }
 
             return containerCells;
