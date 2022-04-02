@@ -5,7 +5,10 @@ Show
 Hide
  BaseType "Portal Scroll" "Scroll of Wisdom"
 Show
- Class "Currency" "Jewel" "Divination" "Incubator" "Map Fragments" "Blueprint" "Contract" "Maps" "Trinkets" "ExpeditionLogbook"
+ Class "Currency" "Divination" "Incubator" "Map Fragments" "Blueprint" "Contract" "Trinkets" "ExpeditionLogbook"
+Show
+ Class "Maps"
+ MapTier >= 13
 Show
  LinkedSockets 6
 Show
