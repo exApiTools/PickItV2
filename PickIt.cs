@@ -49,11 +49,8 @@ namespace PickIt
             _chestLabelCacheList = new TimeCache<List<LabelOnGround>>(UpdateChestList, 200);
         }
 
-        private List<string> PickitFiles { get; set; }
-
         public override bool Initialise()
         {
-            
             #region Register keys
 
             Settings.PickUpKey.OnValueChanged += () => Input.RegisterKey(Settings.PickUpKey);
@@ -66,6 +63,8 @@ namespace PickIt
             _pickItCoroutine.Pause();
             _workCoroutine = new WaitTime(Settings.ExtraDelay);
             Settings.ExtraDelay.OnValueChanged += (_, i) => _workCoroutine = new WaitTime(i);
+            Settings.FilterFile.OnValueSelected = _ => LoadRuleFiles();
+            Settings.ReloadFilters.OnPressed = LoadRuleFiles;
             LoadRuleFiles();
             return true;
         }
@@ -125,31 +124,6 @@ namespace PickIt
             }
 
             return WorkMode.Stop;
-        }
-
-        public override void DrawSettings()
-        {
-            Settings.ShowInventoryView.Value = ImGuiExtension.Checkbox("Show Inventory Slots", Settings.ShowInventoryView.Value);
-            Settings.MoveInventoryView.Value = ImGuiExtension.Checkbox("Moveable Inventory Slots", Settings.MoveInventoryView.Value);
-
-            Settings.PickUpKey = ImGuiExtension.HotkeySelector("Pickup Key: " + Settings.PickUpKey.Value, Settings.PickUpKey);
-            Settings.LeftClickToggleNode.Value = ImGuiExtension.Checkbox("Mouse Button: " + (Settings.LeftClickToggleNode ? "Left" : "Right"), Settings.LeftClickToggleNode);
-            Settings.PickUpEvenInventoryFull.Value = ImGuiExtension.Checkbox("Try to pickup even if the item does not fit in the inventory", Settings.PickUpEvenInventoryFull);
-            Settings.PickupRange.Value = ImGuiExtension.IntSlider("Pickup Radius", Settings.PickupRange);
-            Settings.ExtraDelay.Value = ImGuiExtension.IntSlider("Extra Click Delay", Settings.ExtraDelay);
-            Settings.LazyLooting.Value = ImGuiExtension.Checkbox("Use Lazy Looting", Settings.LazyLooting);
-            if (Settings.LazyLooting)
-                Settings.NoLazyLootingWhileEnemyClose.Value = ImGuiExtension.Checkbox("No lazy looting while enemy is close", Settings.NoLazyLootingWhileEnemyClose);
-            Settings.LazyLootingPauseKey.Value = ImGuiExtension.HotkeySelector("Pause lazy looting for 2 sec: " + Settings.LazyLootingPauseKey.Value, Settings.LazyLootingPauseKey);
-
-            if (ImGui.Button("Reload All Files")) LoadRuleFiles();
-            Settings.FilterFile = ImGuiExtension.ComboBox("Item filter file", Settings.FilterFile, PickitFiles, out var tempRef);
-            if (tempRef) LoadRuleFiles();
-            if (tempRef) _weightsRules = LoadWeights(Settings.WeightRuleFile);
-
-            Settings.UseWeight.Value = ImGuiExtension.Checkbox("Use Weight", Settings.UseWeight);
-            Settings.PickUpEverything.Value = ImGuiExtension.Checkbox("Pickup Everything", Settings.PickUpEverything);
-            Settings.ExpeditionChests.Value = ImGuiExtension.Checkbox("Expedition Chests", Settings.ExpeditionChests);
         }
 
         private DateTime DisableLazyLootingTill { get; set; }
@@ -250,22 +224,22 @@ namespace PickIt
 
         private List<CustomItem> UpdateCurrentLabels()
         {
-            var window = GameController.Window.GetWindowRectangleTimeCache;
-            var rect = new RectangleF(window.X, window.X, window.X + window.Width, window.Y + window.Height);
+            var window = GameController.Window.GetWindowRectangleTimeCache with { Location = Vector2.Zero };
             var labels = GameController.Game.IngameState.IngameUi.ItemsOnGroundLabelsVisible;
 
             return labels?.Where(x => x.Address != 0 && x.ItemOnGround?.Path != null && x.IsVisible
-                                   && x.Label.GetClientRectCache.Center.PointInRectangle(rect)
-                                   && x.CanPickUp && x.MaxTimeForPickUp.TotalSeconds <= 0)
-                          .Select(x => new CustomItem(x, GameController.Files, _weightsRules))
-                          .ToList();
+                                   && window.Contains(x.Label.GetClientRectCache.Center)
+                                   && (Settings.IgnoreCanPickUp || x.CanPickUp) 
+                                   && x.MaxTimeForPickUp.TotalSeconds <= 0)
+               .Select(x => new CustomItem(x, GameController.Files, _weightsRules))
+               .ToList();
         }
 
         private List<LabelOnGround> UpdateChestList() =>
             GameController?.Game?.IngameState?.IngameUi?.ItemsOnGroundLabelsVisible
                .Where(x => x.Address != 0 &&
                            x.IsVisible &&
-                           x.CanPickUp &&
+                           (Settings.IgnoreCanPickUp || x.CanPickUp) &&
                            x.ItemOnGround.Path?.Contains("LeaguesExpedition") == true &&
                            x.ItemOnGround.HasComponent<Chest>())
                .OrderBy(x => x.ItemOnGround.DistancePlayer)
@@ -281,7 +255,7 @@ namespace PickIt
                                          && x.Distance < Settings.PickupRange
                                          && IsLabelClickable(x.LabelOnGround)
                                          && DoWePickThis(x)
-                                         && (Settings.PickUpEvenInventoryFull || CanFitInventory(x)))
+                                         && (Settings.PickUpWhenInventoryIsFull || CanFitInventory(x)))
                                 .MinBy(x => x.Distance);
 
             var workMode = GetWorkMode();
@@ -530,9 +504,16 @@ namespace PickIt
                 return;
             }
 
-            if (!string.IsNullOrWhiteSpace(Settings.FilterFile))
+            var dirInfo = new DirectoryInfo(pickitConfigFileDirectory);
+            Settings.FilterFile.Values = dirInfo.GetFiles("*.txt").Select(x => Path.GetFileNameWithoutExtension(x.Name)).ToList();
+            if (Settings.FilterFile.Values.Any() && !Settings.FilterFile.Values.Contains(Settings.FilterFile.Value))
             {
-                var filterFilePath = Path.Combine(pickitConfigFileDirectory, $"{Settings.FilterFile}.txt");
+                Settings.FilterFile.Value = Settings.FilterFile.Values.First();
+            }
+
+            if (!string.IsNullOrWhiteSpace(Settings.FilterFile.Value))
+            {
+                var filterFilePath = Path.Combine(pickitConfigFileDirectory, $"{Settings.FilterFile.Value}.txt");
                 if (File.Exists(filterFilePath))
                 {
                     var fileContent = File.ReadAllLines(filterFilePath);
@@ -545,10 +526,6 @@ namespace PickIt
                     LogError("Item filter file not found, plugin will not work");
                 }
             }
-
-            var dirInfo = new DirectoryInfo(pickitConfigFileDirectory);
-            PickitFiles = dirInfo.GetFiles("*.txt").Select(x => Path.GetFileNameWithoutExtension(x.Name)).ToList();
-            _weightsRules = LoadWeights(Settings.WeightRuleFile);
         }
 
         public Dictionary<string, int> LoadWeights(string fileName)
