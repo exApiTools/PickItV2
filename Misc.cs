@@ -63,11 +63,7 @@ public partial class PickIt
         var itemStackComp = item.GroundItem.GetComponent<Stack>();
         var inventoryItemStackComp = inventoryItem.Item.GetComponent<Stack>();
 
-        if (inventoryItemStackComp.Size == inventoryItemStackComp.Info.MaxStackSize ||
-            inventoryItemStackComp.Size + itemStackComp.Size > inventoryItemStackComp.Info.MaxStackSize)
-            return false;
-
-        return true;
+        return inventoryItemStackComp.Size + itemStackComp.Size <= inventoryItemStackComp.Info.MaxStackSize;
     }
 
     private bool[,] GetContainer2DArray(ServerInventory containerItems)

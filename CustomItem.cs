@@ -1,4 +1,3 @@
-using System;
 using System.Collections.Generic;
 using System.Linq;
 using ExileCore;
@@ -19,7 +18,6 @@ public record StackInfo(int Count, int MaxCount);
 
 public class CustomItem
 {
-    public Func<bool> IsTargeted;
     public bool IsValid;
     public int AttemptedPickups = 0;
     public CustomItem(LabelOnGround item, FilesContainer fs)
@@ -38,8 +36,6 @@ public class CustomItem
             DebugWindow.LogMsg($"Ground: {GroundItem.Address:X} P {Path}", 2);
             return;
         }
-
-        IsTargeted = () => itemItemOnGround.GetComponent<Targetable>()?.isTargeted == true;
 
         var baseItemType = fs.BaseItemTypes.Translate(Path);
 
@@ -72,7 +68,7 @@ public class CustomItem
             Rarity = mods.ItemRarity;
             IsIdentified = mods.Identified;
             ItemLevel = mods.ItemLevel;
-            IsFractured = mods.IsFractured;
+            IsFractured = mods.HaveFractured;
             IsVeiled = mods.ItemMods.Any(m => m.DisplayName.Contains("Veil"));
         }
 

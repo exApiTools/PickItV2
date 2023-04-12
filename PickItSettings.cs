@@ -13,10 +13,9 @@ public class PickItSettings : ISettings
     public ToggleNode ShowInventoryView { get; set; } = new ToggleNode(true);
     public ToggleNode MoveInventoryView { get; set; } = new ToggleNode(false);
     public HotkeyNode PickUpKey { get; set; } = Keys.F;
-    public ToggleNode LeftClickToggleNode { get; set; } = new ToggleNode(true);
     public ToggleNode PickUpWhenInventoryIsFull { get; set; } = new ToggleNode(false);
     public RangeNode<int> PickupRange { get; set; } = new RangeNode<int>(600, 1, 1000);
-    public RangeNode<int> ExtraDelay { get; set; } = new RangeNode<int>(0, 0, 200);
+    public RangeNode<int> PauseBetweenClicks { get; set; } = new RangeNode<int>(100, 0, 500);
     public ToggleNode LazyLooting { get; set; } = new ToggleNode(false);
     public ToggleNode NoLazyLootingWhileEnemyClose { get; set; } = new ToggleNode(false);
     public HotkeyNode LazyLootingPauseKey { get; set; } = new HotkeyNode(Keys.Space);
