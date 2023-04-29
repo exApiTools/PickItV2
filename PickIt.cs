@@ -334,6 +334,11 @@ public partial class PickIt : BaseSettingsPlugin<PickItSettings>
                         && DoWePickThis(x)
                         && (Settings.PickUpWhenInventoryIsFull || CanFitInventory(x)))
             .MinBy(x => x.Distance);
+        
+        if(pickUpThisItem == null)
+        {
+            return true;
+        }
 
         var workMode = GetWorkMode();
         if (workMode == WorkMode.Manual || workMode == WorkMode.Lazy && ShouldLazyLoot(pickUpThisItem))
