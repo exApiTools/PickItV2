@@ -17,7 +17,6 @@ using System.Text.RegularExpressions;
 using System.Threading;
 using System.Threading.Tasks;
 using ExileCore.Shared.Enums;
-using FilterCore;
 using SDxVector2 = SharpDX.Vector2;
 
 namespace PickIt;
