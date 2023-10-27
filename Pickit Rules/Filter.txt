@@ -159,10 +159,16 @@ item.isMap && item.MapTier >= 13 // Tier 13+ maps
 
 item.NumberOfSockets > 0 
 && item.SocketLinks.Any(links => links.Count(link => link == 1) == 1
-							  && links.Count(link => link == 2) == 2
-							  && links.Count(link => link == 3) == 3) // link needs 3 Blue 2 Greens 1 Red  [Red = 1, Green = 2, Blue = 3, White = 4]
+&& links.Count(link => link == 2) == 2
+&& links.Count(link => link == 3) == 3) // link needs 3 Blue 2 Greens 1 Red  [Red = 1, Green = 2, Blue = 3, White = 4]
 
 item.GemInfo != null && item.BaseName.Contains("Flame Dash") && item.BaseName.Contains("Freezing Pulse") // wanted gems for early leveling and other shit
+
+item.ItemMods.Any(itemMod 
+=> itemMod.Name.ToLower().Contains("CriticalMultiplier".ToLower())
+&& itemMod.Values != null
+&& itemMod.Values.Count >= 0
+&& itemMod.Values[0] > 30)
 
 item.ClassName == "DivinationCard" // div cards
 

@@ -64,6 +64,7 @@ namespace PickIt
         public int Height { get; }
         public int Width { get; }
         public float Distance => LabelOnGround.ItemOnGround?.DistancePlayer ?? float.PositiveInfinity;
+
         public StackData StackInfo { get; }
 
         public Entity GroundItem { get; }
@@ -142,7 +143,6 @@ namespace PickIt
             {
                 StackInfo = new StackData(stackComp.Size, stackComp.Info.MaxStackSize);
             }
-
 
             // Processing Sockets
             NumberOfSockets = socketsComp?.NumberOfSockets ?? 0;
