@@ -166,13 +166,13 @@ public partial class PickIt : BaseSettingsPlugin<PickItSettings>
                 var result = cachedQuery.CompiledQuery.DynamicInvoke(item);
                 if (result is bool && (bool)result)
                 {
-                    DebugWindow.LogMsg($"Evaluation Result: ({(bool)result}) Line # {cachedQuery.LineNumber} Entry({cachedQuery.Query}) on Item({item.BaseName})", 10);
+                    DebugWindow.LogMsg($"Evaluation Result: ({(bool)result}) Line # {cachedQuery.InitialLine} Entry({cachedQuery.Query}) on Item({item.BaseName})", 10);
                     return true; // Stop further checks once a match is found
                 }
             }
             catch (Exception ex)
             {
-                DebugWindow.LogError($"Evaluation Error! Line # {cachedQuery.LineNumber} Entry: '{cachedQuery.Query}' Trigger Item {item.BaseName}\n{ex.StackTrace}");
+                DebugWindow.LogError($"Evaluation Error! Line # {cachedQuery.InitialLine} Entry: '{cachedQuery.Query}' Trigger Item {item.BaseName}\n{ex.StackTrace}");
                 return false;
             }
         }

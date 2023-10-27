@@ -15,7 +15,7 @@ namespace PickIt
     {
         public string Query { get; set; }
         public Func<ItemData, bool> CompiledQuery { get; set; }
-        public int LineNumber { get; set; }
+        public int InitialLine { get; set; }
     }
     public class ItemFilter
     {
@@ -31,6 +31,7 @@ namespace PickIt
             var sections = new List<string>();
             var section = string.Empty;
             var sectionLineNumber = 0;
+            var sanitizedLineNumber = 0;
 
             foreach (var (line, index) in lines.Select((value, i) => (value, i)))
             {
@@ -39,41 +40,37 @@ namespace PickIt
                     if (string.IsNullOrEmpty(section))
                     {
                         sectionLineNumber = index + 1;
+                        sanitizedLineNumber = sectionLineNumber; // Set sanitizedLineNumber at the start of each section
                     }
                     section += line + "\n";
                 }
                 else if (!string.IsNullOrEmpty(section))
                 {
+                    try
+                    {
+                        string[] parts = section.Split(new[] { "//" }, StringSplitOptions.None);
+                        string sanitizedQuery = SanitizeQuery(parts[0].Trim());
+                        LambdaExpression lambda = ParseItemDataLambda(sanitizedQuery);
+                        var compiledLambda = lambda.Compile();
+                        _compiledQueries.Add(new ItemFilterData
+                        {
+                            Query = section,
+                            CompiledQuery = (Func<ItemData, bool>)compiledLambda,
+                            InitialLine = sanitizedLineNumber
+                        });
+                    }
+                    catch (Exception e)
+                    {
+                        DebugWindow.LogError($"[ItemQueryProcessor] Error caching query ({section}) on Line # {sanitizedLineNumber}: {e.Message}", 30);
+                    }
                     sections.Add(section.Trim());
                     section = string.Empty;
                 }
             }
 
-            foreach (var (s, index) in sections.Select((value, i) => (value, i)))
-            {
-                try
-                {
-                    string[] parts = s.Split(new[] { "//" }, StringSplitOptions.None);
-                    string sanitizedQuery = SanitizeQuery(parts[0].Trim());
-                    LambdaExpression lambda = ParseItemDataLambda(sanitizedQuery);
-                    var compiledLambda = lambda.Compile();
-                    _compiledQueries.Add(new ItemFilterData
-                    {
-                        Query = s,
-                        CompiledQuery = (Func<ItemData, bool>)compiledLambda,
-                        LineNumber = sectionLineNumber + index
-                    });
-                }
-                catch (Exception e)
-                {
-                    DebugWindow.LogError($"[ItemQueryProcessor] Error caching query ({s}) on Line # {sectionLineNumber + index}: {e.Message}", 30);
-                }
-            }
             DebugWindow.LogMsg($@"[ItemQueryProcessor] Processed {filterFilePath.Split("\\").LastOrDefault()} with {_compiledQueries.Count} queries", 15, Color.Orange);
             return _compiledQueries;
         }
-
-
 
 
         private static LambdaExpression ParseItemDataLambda(string expression)
