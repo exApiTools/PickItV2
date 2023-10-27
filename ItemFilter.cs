@@ -35,7 +35,7 @@ namespace PickIt
 
             foreach (var (line, index) in lines.Select((value, i) => (value, i)))
             {
-                if (!string.IsNullOrWhiteSpace(line))
+                if (!string.IsNullOrWhiteSpace(line) && !line.TrimStart().StartsWith("//"))
                 {
                     if (string.IsNullOrEmpty(section))
                     {
@@ -71,6 +71,7 @@ namespace PickIt
             DebugWindow.LogMsg($@"[ItemQueryProcessor] Processed {filterFilePath.Split("\\").LastOrDefault()} with {_compiledQueries.Count} queries", 15, Color.Orange);
             return _compiledQueries;
         }
+
 
 
         private static LambdaExpression ParseItemDataLambda(string expression)

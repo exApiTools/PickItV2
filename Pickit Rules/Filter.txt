@@ -151,12 +151,16 @@ item.ItemLevel >= 86 && isInfluenced && Rarity <= IItemRarity.Rare // ilvl 86+ i
 
 item.isMap && item.MapTier >= 13 // Tier 13+ maps
 
+//item.NumberOfSockets > 0 
+//&& item.SocketLinks.Any(current => current.Length >= 3 
+//&& current.Contains(1) 
+//&& current.Contains(2) 
+//&& current.Contains(3)) // RGB
+
 item.NumberOfSockets > 0 
-&& item.SocketLinks.Any(current => 
-						current.Length >= 3 
-						&& current.Contains(1) 
-						&& current.Contains(2) 
-						&& current.Contains(3)) // RGB
+&& item.SocketLinks.Any(links => links.Count(link => link == 1) == 1
+							  && links.Count(link => link == 2) == 2
+							  && links.Count(link => link == 3) == 3) // link needs 3 Blue 2 Greens 1 Red  [Red = 1, Green = 2, Blue = 3, White = 4]
 
 item.GemInfo != null && item.BaseName.Contains("Flame Dash") && item.BaseName.Contains("Freezing Pulse") // wanted gems for early leveling and other shit
 
