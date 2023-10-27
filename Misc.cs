@@ -8,7 +8,7 @@ namespace PickIt;
 
 public partial class PickIt
 {
-    private bool CanFitInventory(CustomItem groundItem)
+    private bool CanFitInventory(ItemData groundItem)
     {
         return FindSpotInventory(groundItem) != null;
     }
@@ -16,7 +16,7 @@ public partial class PickIt
     /// <summary>
     /// Finds a spot available in the inventory to place the item
     /// </summary>
-    private Vector2? FindSpotInventory(CustomItem item)
+    private Vector2? FindSpotInventory(ItemData item)
     {
         var inventorySlots = InventorySlots;
         var inventoryItems = _inventoryItems.InventorySlotItems;
@@ -49,7 +49,7 @@ public partial class PickIt
         return null;
     }
 
-    private static bool CanItemBeStacked(CustomItem item, ServerInventory.InventSlotItem inventoryItem)
+    private static bool CanItemBeStacked(ItemData item, ServerInventory.InventSlotItem inventoryItem)
     {
         // return false if not the same item
         if (item.GroundItem.Path != inventoryItem.Item.Path)

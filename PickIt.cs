@@ -26,12 +26,12 @@ public partial class PickIt : BaseSettingsPlugin<PickItSettings>
 {
     private const string PickitRuleDirectory = "Pickit Rules";
     private readonly TimeCache<List<LabelOnGround>> _chestLabels;
-    private readonly TimeCache<List<CustomItem>> _itemLabels;
+    private readonly TimeCache<List<ItemData>> _itemLabels;
     private readonly CachedValue<LabelOnGround> _portalLabel;
     private readonly CachedValue<bool[,]> _inventorySlotsCache;
-    private ItemFilterProcessor _filterProcessor;
     private ServerInventory _inventoryItems;
     private SyncTask<bool> _pickUpTask;
+    private List<ItemFilterData> _itemFilterData;
     private bool[,] InventorySlots => _inventorySlotsCache.Value;
     private readonly Stopwatch _sinceLastClick = Stopwatch.StartNew();
 
@@ -39,7 +39,7 @@ public partial class PickIt : BaseSettingsPlugin<PickItSettings>
     {
         Name = "PickIt";
         _inventorySlotsCache = new FrameCache<bool[,]>(() => GetContainer2DArray(_inventoryItems));
-        _itemLabels = new TimeCache<List<CustomItem>>(UpdateCurrentLabels, 500);
+        _itemLabels = new TimeCache<List<ItemData>>(UpdateCurrentLabels, 500);
         _chestLabels = new TimeCache<List<LabelOnGround>>(UpdateChestList, 200);
         _portalLabel = new TimeCache<LabelOnGround>(() => GetLabel(@"Metadata/MiscellaneousObjects/.*Portal"), 200);
     }
@@ -157,14 +157,29 @@ public partial class PickIt : BaseSettingsPlugin<PickItSettings>
         }
     }
 
-    private bool DoWePickThis(CustomItem itemEntity)
+    private bool DoWePickThis(ItemData item, List<ItemFilterData> filterData)
     {
-        return itemEntity.IsValid &&
-               (Settings.PickUpEverything ||
-                (_filterProcessor?.ShowItem(itemEntity) ?? false));
+        foreach (var cachedQuery in filterData)
+        {
+            try
+            {
+                var result = cachedQuery.CompiledQuery.DynamicInvoke(item);
+                if (result is bool && (bool)result)
+                {
+                    DebugWindow.LogMsg($"Evaluation Result: ({(bool)result}) Line # {cachedQuery.LineNumber} Entry({cachedQuery.Query}) on Item({item.BaseName})", 10);
+                    return true; // Stop further checks once a match is found
+                }
+            }
+            catch (Exception ex)
+            {
+                DebugWindow.LogError($"Evaluation Error! Line # {cachedQuery.LineNumber} Entry: '{cachedQuery.Query}' Trigger Item {item.BaseName}\n{ex.StackTrace}");
+                return false;
+            }
+        }
+        return false;
     }
 
-    private List<CustomItem> UpdateCurrentLabels()
+    private List<ItemData> UpdateCurrentLabels()
     {
         var window = GameController.Window.GetWindowRectangleTimeCache with { Location = SDxVector2.Zero };
         var labels = GameController.Game.IngameState.IngameUi.ItemsOnGroundLabelsVisible;
@@ -173,7 +188,7 @@ public partial class PickIt : BaseSettingsPlugin<PickItSettings>
                                   && window.Contains(x.Label.GetClientRectCache.Center)
                                   && (Settings.IgnoreCanPickUp || x.CanPickUp)
                                   && x.MaxTimeForPickUp.TotalSeconds <= 0)
-            .Select(x => new CustomItem(x, GameController.Files))
+            .Select(x => new ItemData(x, GameController.Files))
             .ToList();
     }
 
@@ -210,7 +225,7 @@ public partial class PickIt : BaseSettingsPlugin<PickItSettings>
         return true;
     }
 
-    private bool ShouldLazyLoot(CustomItem item)
+    private bool ShouldLazyLoot(ItemData item)
     {
         var itemPos = item.LabelOnGround.ItemOnGround.PosNum;
         var playerPos = GameController.Player.PosNum;
@@ -310,13 +325,11 @@ public partial class PickIt : BaseSettingsPlugin<PickItSettings>
             var filterFilePath = Path.Combine(pickitConfigFileDirectory, $"{Settings.FilterFile.Value}.txt");
             if (File.Exists(filterFilePath))
             {
-                var fileContent = File.ReadAllLines(filterFilePath);
-                var filter = new Filter(fileContent.ToList());
-                _filterProcessor = new ItemFilterProcessor(filter);
+                _itemFilterData = ItemFilter.Load(filterFilePath);
             }
             else
             {
-                _filterProcessor = null;
+                _itemFilterData = null;
                 LogError("Item filter file not found, plugin will not work");
             }
         }
@@ -331,7 +344,7 @@ public partial class PickIt : BaseSettingsPlugin<PickItSettings>
                         && x.AttemptedPickups == 0
                         && x.Distance < Settings.PickupRange
                         && IsLabelClickable(x.LabelOnGround)
-                        && DoWePickThis(x)
+                        && DoWePickThis(x, _itemFilterData)
                         && (Settings.PickUpWhenInventoryIsFull || CanFitInventory(x)))
             .MinBy(x => x.Distance);
 
