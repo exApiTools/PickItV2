@@ -1,84 +1,167 @@
 item.BaseName == "Armourer's Scrap"
+
 item.BaseName == "Awakened Sextant"
+
 item.BaseName == "Blacksmith's Whetstone"
+
 item.BaseName == "Blessed Orb"
+
 item.BaseName == "Cartographer's Chisel"
+
 item.BaseName == "Chaos Orb"
+
 item.BaseName == "Chromatic Orb"
+
 item.BaseName == "Divine Orb"
+
 item.BaseName == "Enkindling Orb"
+
 item.BaseName == "Exalted Orb"
+
 item.BaseName == "Gemcutter's Prism"
+
 item.BaseName == "Glassblower's Bauble"
+
 item.BaseName == "Instilling Orb"
+
 item.BaseName == "Jeweller's Orb"
+
 item.BaseName == "Lesser Eldritch Ember"
+
 item.BaseName == "Lesser Eldritch Ichor"
+
 item.BaseName == "Mirror of Kalandra"
+
 item.BaseName == "Orb of Alchemy"
+
 item.BaseName == "Orb of Alteration"
+
 item.BaseName == "Orb of Annulment"
+
 item.BaseName == "Orb of Augmentation"
+
 item.BaseName == "Orb of Binding"
+
 item.BaseName == "Orb of Chance"
+
 item.BaseName == "Orb of Fusing"
+
 item.BaseName == "Orb of Horizons"
+
 item.BaseName == "Orb of Regret"
+
 item.BaseName == "Orb of Scouring"
+
 item.BaseName == "Orb of Transmutation"
+
 item.BaseName == "Orb of Unmaking"
+
 item.BaseName == "Portal Scroll"
+
 item.BaseName == "Regal Orb" // the regal boy
+
 item.BaseName == "Rogue's Marker"
+
 item.BaseName == "Sacred Orb"
+
 item.BaseName == "Scroll of Wisdom"
+
 item.BaseName == "Stacked Deck"
+
 item.BaseName == "Surveyor's Compass"
+
 item.BaseName == "Vaal Orb"
+
 item.BaseName == "Veiled Chaos Orb"
 
 item.BaseName == "Alchemy Shard"
+
 item.BaseName == "Alteration Shard"
+
 item.BaseName == "Ancient Shard"
+
 item.BaseName == "Annulment Shard"
+
 item.BaseName == "Binding Shard"
+
 item.BaseName == "Chaos Shard"
+
 item.BaseName == "Engineer's Shard"
+
 item.BaseName == "Exalted Shard"
+
 item.BaseName == "Fracturing Shard"
+
 item.BaseName == "Harbinger's Shard"
+
 item.BaseName == "Horizon Shard"
+
 item.BaseName == "Mirror Shard"
+
 item.BaseName == "Regal Shard"
+
 item.BaseName == "Scroll Fragment"
+
 item.BaseName == "Transmutation Shard"
 
 item.BaseName == "Awakener's Orb"
+
 item.BaseName == "Crescent Splinter"
+
 item.BaseName == "Crusader's Exalted Orb"
+
 item.BaseName == "Eldritch Chaos Orb"
+
 item.BaseName == "Eldritch Exalted Orb"
+
 item.BaseName == "Eldritch Orb of Annulment"
+
 item.BaseName == "Elevated Sextant"
+
 item.BaseName == "Exceptional Eldritch Ember"
+
 item.BaseName == "Exceptional Eldritch Ichor"
+
 item.BaseName == "Grand Eldritch Ember"
+
 item.BaseName == "Grand Eldritch Ichor"
+
 item.BaseName == "Greater Eldritch Ember"
+
 item.BaseName == "Greater Eldritch Ichor"
+
 item.BaseName == "Hunter's Exalted Orb"
+
 item.BaseName == "Orb of Conflict"
+
 item.BaseName == "Orb of Dominance"
+
 item.BaseName == "Redeemer's Exalted Orb"
+
 item.BaseName == "Warlord's Exalted Orb"
 
-item.GemInfo != null && (item.GemInfo.QualityType == ISkillGemQualityTypeE.Anomalous || item.GemInfo.QualityType == ISkillGemQualityTypeE.Phantasmal || item.GemInfo.QualityType == ISkillGemQualityTypeE.Divergent) // Alt quality gems
+item.GemInfo != null 
+&& (item.GemInfo.QualityType == ISkillGemQualityTypeE.Anomalous 
+|| item.GemInfo.QualityType == ISkillGemQualityTypeE.Phantasmal 
+|| item.GemInfo.QualityType == ISkillGemQualityTypeE.Divergent) // Alt quality gems
+
 item.ClassName == "HeistObjective" // Heist items
+
 item.ItemLevel >= 86 && isInfluenced && Rarity <= IItemRarity.Rare // ilvl 86+ influenced non uniques
+
 item.isMap && item.MapTier >= 13 // Tier 13+ maps
-item.NumberOfSockets > 0 && item.SocketLinks.Any(current => current.Length >= 3 && current.Contains(1) && current.Contains(2) && current.Contains(3)) // RGB
+
+item.NumberOfSockets > 0 
+&& item.SocketLinks.Any(current => 
+						current.Length >= 3 
+						&& current.Contains(1) 
+						&& current.Contains(2) 
+						&& current.Contains(3)) // RGB
+
 item.GemInfo != null && item.BaseName.Contains("Flame Dash") && item.BaseName.Contains("Freezing Pulse") // wanted gems for early leveling and other shit
+
 item.ClassName == "DivinationCard" // div cards
+
 item.BaseName == "Treasure Key" && item.BaseName == "Golden Key" && item.BaseName == "Silver Key" // lab + incursion pickups
 
 item.isMap && item.MapTier >= 1 // Tier 1+ maps

@@ -7,6 +7,7 @@ using System.Linq.Dynamic.Core;
 using SharpDX;
 using System.Linq;
 using PickIt;
+using MoreLinq;
 
 namespace PickIt
 {
@@ -26,39 +27,54 @@ namespace PickIt
         private static List<ItemFilterData> CacheQueries(string filterFilePath)
         {
             var _compiledQueries = new List<ItemFilterData>();
-            string[] queries = File.ReadAllLines(filterFilePath);
+            var lines = File.ReadAllLines(filterFilePath);
+            var sections = new List<string>();
+            var section = string.Empty;
+            var sectionLineNumber = 0;
 
-            for (int i = 0; i < queries.Length; i++)
+            foreach (var (line, index) in lines.Select((value, i) => (value, i)))
+            {
+                if (!string.IsNullOrWhiteSpace(line))
+                {
+                    if (string.IsNullOrEmpty(section))
+                    {
+                        sectionLineNumber = index + 1;
+                    }
+                    section += line + "\n";
+                }
+                else if (!string.IsNullOrEmpty(section))
+                {
+                    sections.Add(section.Trim());
+                    section = string.Empty;
+                }
+            }
+
+            foreach (var (s, index) in sections.Select((value, i) => (value, i)))
             {
                 try
                 {
-                    if (string.IsNullOrWhiteSpace(queries[i]) || queries[i].Trim().StartsWith("//"))
-                    {
-                        continue;
-                    }
-
-                    // I should make it so users can import this class and deal with cleaning their own queries
-                    // TODO: create a different method that takes in a single line and the users can handle their query filter to allow for alternative storage
-                    var processedLine = queries[i].Split(new string[] { "//" }, StringSplitOptions.None)[0].Trim();
-
-                    string sanitizedQuery = SanitizeQuery(processedLine);
+                    string[] parts = s.Split(new[] { "//" }, StringSplitOptions.None);
+                    string sanitizedQuery = SanitizeQuery(parts[0].Trim());
                     LambdaExpression lambda = ParseItemDataLambda(sanitizedQuery);
                     var compiledLambda = lambda.Compile();
                     _compiledQueries.Add(new ItemFilterData
                     {
-                        Query = processedLine,
+                        Query = s,
                         CompiledQuery = (Func<ItemData, bool>)compiledLambda,
-                        LineNumber = i
+                        LineNumber = sectionLineNumber + index
                     });
                 }
                 catch (Exception e)
                 {
-                    DebugWindow.LogError($"[ItemQueryProcessor] Error caching query ({queries[i]}) on Line # {i + 1}: {e.Message}", 30);
+                    DebugWindow.LogError($"[ItemQueryProcessor] Error caching query ({s}) on Line # {sectionLineNumber + index}: {e.Message}", 30);
                 }
             }
             DebugWindow.LogMsg($@"[ItemQueryProcessor] Processed {filterFilePath.Split("\\").LastOrDefault()} with {_compiledQueries.Count} queries", 15, Color.Orange);
             return _compiledQueries;
         }
+
+
+
 
         private static LambdaExpression ParseItemDataLambda(string expression)
         {
@@ -71,8 +87,8 @@ namespace PickIt
 
         private static string SanitizeQuery(string query)
         {
-            string sanitizedQuery = query.Trim().Replace("\n", ""); // Escape double quotes
-            return sanitizedQuery;
+            // for later if there is more to do.
+            return query;
         }
     }
 }
