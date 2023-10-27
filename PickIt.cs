@@ -31,6 +31,7 @@ public partial class PickIt : BaseSettingsPlugin<PickItSettings>
     private ServerInventory _inventoryItems;
     private SyncTask<bool> _pickUpTask;
     private List<ItemFilter> _itemFilters;
+    private bool _pluginBridgeModeOverride;
     private bool[,] InventorySlots => _inventorySlotsCache.Value;
     private readonly Stopwatch _sinceLastClick = Stopwatch.StartNew();
 
@@ -40,7 +41,7 @@ public partial class PickIt : BaseSettingsPlugin<PickItSettings>
         _inventorySlotsCache = new FrameCache<bool[,]>(() => GetContainer2DArray(_inventoryItems));
         _itemLabels = new TimeCache<List<PickItItemData>>(UpdateCurrentLabels, 500);
         _chestLabels = new TimeCache<List<LabelOnGround>>(UpdateChestList, 200);
-        _portalLabel = new TimeCache<LabelOnGround>(() => GetLabel(@"Metadata/MiscellaneousObjects/.*Portal"), 200);
+        _portalLabel = new TimeCache<LabelOnGround>(() => GetLabel(@"^Metadata/(MiscellaneousObjects|Effects/Microtransactions)/.*Portal"), 200);
     }
 
     public override bool Initialise()
@@ -55,6 +56,12 @@ public partial class PickIt : BaseSettingsPlugin<PickItSettings>
 
         Settings.ReloadFilters.OnPressed = LoadRuleFiles;
         LoadRuleFiles();
+        GameController.PluginBridge.SaveMethod("PickIt.ListItems", () => GetItemsToPickup(false).Select(x => x.LabelOnGround).ToList());
+        GameController.PluginBridge.SaveMethod("PickIt.IsActive", () => _pickUpTask?.GetAwaiter().IsCompleted == false);
+        GameController.PluginBridge.SaveMethod("PickIt.SetWorkMode", (bool running) =>
+        {
+            _pluginBridgeModeOverride = running;
+        });
         return true;
     }
 
@@ -71,10 +78,11 @@ public partial class PickIt : BaseSettingsPlugin<PickItSettings>
             !Settings.Enable ||
             Input.GetKeyState(Keys.Escape))
         {
+            _pluginBridgeModeOverride = false;
             return WorkMode.Stop;
         }
 
-        if (Input.GetKeyState(Settings.PickUpKey.Value))
+        if (Input.GetKeyState(Settings.PickUpKey.Value) || _pluginBridgeModeOverride)
         {
             return WorkMode.Manual;
         }
@@ -174,7 +182,7 @@ public partial class PickIt : BaseSettingsPlugin<PickItSettings>
                                   && (Settings.IgnoreCanPickUp || x.CanPickUp)
                                   && x.MaxTimeForPickUp.TotalSeconds <= 0)
             .Select(x => new PickItItemData(x, GameController))
-            .ToList();
+            .ToList() ?? new List<PickItItemData>();
     }
 
     private List<LabelOnGround> UpdateChestList() =>
@@ -212,6 +220,11 @@ public partial class PickIt : BaseSettingsPlugin<PickItSettings>
 
     private bool ShouldLazyLoot(ItemData item)
     {
+        if (item == null)
+        {
+            return false;
+        }
+
         var itemPos = item.LabelOnGround.ItemOnGround.PosNum;
         var playerPos = GameController.Player.PosNum;
         return Math.Abs(itemPos.Z - playerPos.Z) <= 50 &&
@@ -386,15 +399,7 @@ public partial class PickIt : BaseSettingsPlugin<PickItSettings>
     private async SyncTask<bool> RunPickerIterationAsync()
     {
         if (!GameController.Window.IsForeground()) return true;
-        var pickUpThisItem = _itemLabels
-            .Value?
-            .Where(x => x.Entity != null
-                        && x.AttemptedPickups == 0
-                        && x.Distance < Settings.PickupRange
-                        && IsLabelClickable(x.LabelOnGround)
-                        && DoWePickThis(x)
-                        && (Settings.PickUpWhenInventoryIsFull || CanFitInventory(x)))
-            .MinBy(x => x.Distance);
+        var pickUpThisItem = GetItemsToPickup(true).MinBy(x => x.Distance);
 
         var workMode = GetWorkMode();
         if (workMode == WorkMode.Manual || workMode == WorkMode.Lazy && ShouldLazyLoot(pickUpThisItem))
@@ -422,6 +427,17 @@ public partial class PickIt : BaseSettingsPlugin<PickItSettings>
         }
 
         return true;
+    }
+
+    private IEnumerable<PickItItemData> GetItemsToPickup(bool filterAttempts)
+    {
+        return _itemLabels.Value
+            .Where(x => x.Entity != null
+                        && (!filterAttempts || x.AttemptedPickups == 0)
+                        && x.Distance < Settings.PickupRange
+                        && IsLabelClickable(x.LabelOnGround)
+                        && DoWePickThis(x)
+                        && (Settings.PickUpWhenInventoryIsFull || CanFitInventory(x)));
     }
 
     private async SyncTask<bool> PickAsync(LabelOnGround label)
