@@ -47,13 +47,14 @@ public class ItemFilter
             {
                 if (cachedQuery.CompiledQuery(item))
                 {
-                    DebugWindow.LogMsg($"Matched line # {cachedQuery.InitialLine} Entry({cachedQuery.Query}) on Item({item.BaseName})", 10);
+                    DebugWindow.LogMsg($"[ItemQueryProcessor] Matches an Item\nLine # {cachedQuery.InitialLine}\nItem({item.BaseName})\n{cachedQuery.Query.Replace("\n", "")}", 10, Color.LawnGreen);
                     return true; // Stop further checks once a match is found
                 }
             }
-            catch (Exception ex)
+            catch
             {
-                // we just skip the error and carry on down the list, no harm.
+                // skip error for now, its a huge issue when the amount of catching starts creeping up
+                // 4500 lines that procude an error on one item take 50ms per Tick() vs handling the error taking 0.2ms
                 //DebugWindow.LogError($"Evaluation Error! Line # {cachedQuery.InitialLine} Entry: '{cachedQuery.Query}' Item {item.BaseName}\n{ex}");
                 continue;
             }
