@@ -26,8 +26,8 @@ public class ItemData
     public string BaseName { get; }
     public string Name { get; }
     public string HeistContractJobType { get; }
-    public int ItemQuality { get; }
-    public int IsVeiled { get; }
+    public int ItemQuality { get; } = 0;
+    public int VeiledModCount { get; }
     public int FracturedModCount { get; }
     public int ItemLevel { get; }
     public int? MapTier { get; }
@@ -51,7 +51,7 @@ public class ItemData
     public bool Enchanted { get; }
     public ItemRarity Rarity { get; }
     public List<string> ModsNames { get; }
-    public List<ItemMod> ItemMods { get; } = new List<ItemMod>();
+    public List<ItemMod> ItemMods { get; }
     public LabelOnGround LabelOnGround { get; }
     public SkillGemInfo GemInfo { get; }
     public uint InventoryId { get; }
@@ -59,9 +59,7 @@ public class ItemData
     public int Width { get; }
     public bool IsWeapon { get; }
     public float Distance => LabelOnGround.ItemOnGround?.DistancePlayer ?? float.PositiveInfinity;
-
     public StackData StackInfo { get; }
-
     public Entity GroundItem { get; }
     public SocketData SocketInfo { get; } = new SocketData(0, 0, new List<IReadOnlyCollection<int>>(), new List<string>());
 
@@ -117,7 +115,7 @@ public class ItemData
             IsSynthesised = modsComp.Synthesised;
             Enchanted = modsComp.EnchantedMods?.Count > 0;
             ModsNames = modsComp.ItemMods.Select(mod => mod.Name).ToList();
-            IsVeiled = modsComp.ItemMods.Count(m => m.DisplayName.Contains(ModNameVeil));
+            VeiledModCount = modsComp.ItemMods.Count(m => m.DisplayName.Contains(ModNameVeil));
             IsBlightMap = modsComp.ItemMods.Any(m => m.Name.Contains(ModNameInfectedMap));
             DeliriumStacks = modsComp.ItemMods.Count(m => m.Name.Contains(ModNameAfflictionMapReward));
             IsElderGuardianMap = modsComp.ItemMods.Any(m => m.Name.Contains(ModNameMapElderContainsBoss));
@@ -156,6 +154,8 @@ public class ItemData
         }
 
         InventoryId = item.InventoryId;
+
+        var test = !IsIdentified && Rarity == ItemRarity.Rare && ItemLevel <= 74 && ItemLevel >= 60 && ClassName == "Ring";
     }
 
     public bool HasUnorderedSocketGroup(string groupText) =>
@@ -167,32 +167,117 @@ public class ItemData
                     .Select(item => item)
                     .ToList();
 
-    public List<int> FindMods(string[] wantedMods)
+    public List<int> MatchModsSum(string[] wantedMods)
     {
         List<List<int>> foundValues = new List<List<int>>();
-
 
         foreach (var wantedMod in wantedMods)
         {
             var foundMod = ItemMods.FirstOrDefault(item => item.Name.ToLower() == wantedMod.ToLower());
             if (foundMod == null)
             {
-                return null; // Return null if any mod is not found
+                return null;
             }
 
             foundValues.Add(foundMod.Values);
+        }
 
-            // Combine the values if all mods are found
-            if (foundValues.Count == wantedMods.Length)
+        if (foundValues.Count == wantedMods.Length)
+        {
+            return SumIntListValues(foundValues);
+        }
+
+        return null;
+    }
+
+    public List<int> MatchModsWeightedSum(Dictionary<string, int> wantedMods)
+    {
+        List<List<int>> foundValues = new List<List<int>>();
+
+        foreach (var wantedMod in wantedMods)
+        {
+            var foundMod = ItemMods?.FirstOrDefault(item => item.Name.ToLower() == wantedMod.Key);
+            if (foundMod == null)
             {
-                return SumLists(foundValues);
+                return null;
+            }
+
+            var valueList = new List<int>();
+            foreach (var value in foundMod.Values)
+            {
+                valueList.Add(value * wantedMod.Value);
+            }
+            foundValues.Add(valueList);
+        }
+
+        if (foundValues.Count == wantedMods.Count)
+        {
+            return SumIntListValues(foundValues);
+        }
+
+        return null;
+    }
+
+    public List<int> AnyModsSum(string[] wantedMods)
+    {
+        List<List<int>> foundValues = new List<List<int>>();
+
+        foreach (var wantedMod in wantedMods)
+        {
+            var foundMod = ItemMods?.FirstOrDefault(item => item.Name.ToLower() == wantedMod.ToLower());
+            if (foundMod != null)
+            {
+                foundValues.Add(foundMod.Values);
             }
         }
 
-        return null; // Return null if no mods are found
+        return SumIntListValues(foundValues);
     }
 
-    public List<int> SumLists(List<List<int>> lists)
+    // currently doesnt work due to Type Dictionary not found
+    public List<int> AnyModsWeightedSum(Dictionary<string, int> wantedMods)
+    {
+        List<List<int>> foundValues = new List<List<int>>();
+
+        foreach (var wantedMod in wantedMods)
+        {
+            var foundMod = ItemMods?.FirstOrDefault(item => item.Name.ToLower() == wantedMod.Key);
+            if (foundMod != null)
+            {
+                var valueList = new List<int>();
+                foreach (var value in foundMod.Values) 
+                {
+                    valueList.Add(value * wantedMod.Value);
+                }
+                foundValues.Add(valueList);
+            }
+        }
+
+        return SumIntListValues(foundValues);
+    }
+
+    public bool HasMods(string[] wantedMods)
+    {
+        List<List<int>> foundValues = new List<List<int>>();
+
+        foreach (var wantedMod in wantedMods)
+        {
+            var foundMod = ItemMods?.FirstOrDefault(item => item.Name.ToLower() == wantedMod.ToLower());
+            if (foundMod != null)
+            {
+                foundValues.Add(foundMod.Values);
+            }
+        }
+
+        if (foundValues.Count == wantedMods.Length)
+        {
+            return true;
+        }
+
+        return false;
+    }
+
+    public List<int> SumIntListValues(List<List<int>> lists)
     {
         int maxLength = lists.SelectMany(list => list).Count();
         List<int> combinedList = new List<int>();

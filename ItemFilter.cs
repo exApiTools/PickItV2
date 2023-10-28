@@ -51,11 +51,11 @@ public class ItemFilter
                     return true; // Stop further checks once a match is found
                 }
             }
-            catch
+            catch (Exception ex)
             {
-                // skip error for now, its a huge issue when the amount of catching starts creeping up
+                // huge issue when the amount of catching starts creeping up
                 // 4500 lines that procude an error on one item take 50ms per Tick() vs handling the error taking 0.2ms
-                //DebugWindow.LogError($"Evaluation Error! Line # {cachedQuery.InitialLine} Entry: '{cachedQuery.Query}' Item {item.BaseName}\n{ex}");
+                DebugWindow.LogError($"Evaluation Error! Line # {cachedQuery.InitialLine} Entry: '{cachedQuery.Query}' Item {item.BaseName}\n{ex}");
                 continue;
             }
         }
