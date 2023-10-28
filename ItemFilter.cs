@@ -53,8 +53,9 @@ public class ItemFilter
             }
             catch (Exception ex)
             {
-                DebugWindow.LogError($"Evaluation Error! Line # {cachedQuery.InitialLine} Entry: '{cachedQuery.Query}' Item {item.BaseName}\n{ex}");
-                return false;
+                // we just skip the error and carry on down the list, no harm.
+                //DebugWindow.LogError($"Evaluation Error! Line # {cachedQuery.InitialLine} Entry: '{cachedQuery.Query}' Item {item.BaseName}\n{ex}");
+                continue;
             }
         }
 
@@ -86,7 +87,7 @@ public class ItemFilter
                 var exMessage = ex is ParseException parseEx
                     ? $"{parseEx.Message} (at index {parseEx.Position})"
                     : ex.ToString();
-                DebugWindow.LogError($"[ItemQueryProcessor] Error processing query ({query}) on Line # {initialLine}: {exMessage}");
+                DebugWindow.LogError($"[ItemQueryProcessor] Error processing query ({query.Replace("\n", "")}) on Line # {initialLine}: {exMessage}", 15);
             }
         }
 

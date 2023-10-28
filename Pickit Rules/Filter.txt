@@ -177,8 +177,10 @@ ClassName == "DivinationCard" // div cards
 
 BaseName == "Treasure Key" && BaseName == "Golden Key" && BaseName == "Silver Key" // lab + incursion pickups
 
+FindMods(new string[] { "FireResist", "ColdResist", "Lightning" })[0] >= 75 // test func
+
 isMap && MapTier >= 1 // Tier 1+ maps
 
 SocketInfo.SocketNumber == 4 && HasUnorderedSocketGroup("rb") // 4 sockets with a link that has 2 reds and a blue
 
-np(FindMods(new string[] { "FireResist", "ColdResist" }).FirstOrDefault(x => x >= 72)) != null // test func
+FindMods(new string[] { "FireResist", "ColdResist" })[0] >= 60 // test func
