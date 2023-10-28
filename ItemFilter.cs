@@ -36,7 +36,12 @@ public class ItemFilter
 
     public static ItemFilter Load(string filterFilePath)
     {
-        return new ItemFilter(GetQueries(filterFilePath));
+        return new ItemFilter(GetQueries(filterFilePath, File.ReadAllLines(filterFilePath)));
+    }
+
+    public static ItemFilter FromString(string @string)
+    {
+        return new ItemFilter(GetQueries("memory", @string.ReplaceLineEndings("\n").Split("\n")));
     }
 
     public bool Matches(ItemData item)
@@ -63,10 +68,9 @@ public class ItemFilter
         return false;
     }
 
-    private static List<ItemFilterData> GetQueries(string filterFilePath)
+    private static List<ItemFilterData> GetQueries(string filterFilePath, string[] rawLines)
     {
         var compiledQueries = new List<ItemFilterData>();
-        var rawLines = File.ReadAllLines(filterFilePath);
         var lines = SplitQueries(rawLines);
 
         foreach (var (query, rawQuery, initialLine) in lines)

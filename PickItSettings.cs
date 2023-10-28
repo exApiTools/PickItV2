@@ -30,4 +30,7 @@ public class PickItSettings : ISettings
     [Menu("Ignore \"Can pick up\" flag")]
     public ToggleNode IgnoreCanPickUp { get; set; } = new ToggleNode(false);
     public Vector2 InventorySlotsVector2 { get; set; } = new Vector2(0, 0);
+
+    [JsonIgnore]
+    public TextNode FilterTest { get; set; } = new TextNode();
 }

@@ -41,6 +41,8 @@ public sealed class CustomDynamicLinqCustomTypeProvider :
         FindTypesMarkedWithDynamicLinqTypeAttribute(AppDomain.CurrentDomain.GetAssemblies())
             .Concat(typeof(CustomDynamicLinqCustomTypeProvider).Assembly.GetExportedTypes())
             .Concat(typeof(GameStat).Assembly.GetExportedTypes().Where(x => x.Name.Length > 4))
+            .Append(typeof(Dictionary<,>))
+            .Append(typeof(ILookup<,>))
             .Append(typeof(Vector2))
             .Append(typeof(Vector3))
         );
