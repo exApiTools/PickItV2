@@ -36,7 +36,7 @@ public partial class PickIt : BaseSettingsPlugin<PickItSettings>
 
     public PickIt()
     {
-        Name = "PickIt";
+        Name = "PickItWithLinq";
         _inventorySlotsCache = new FrameCache<bool[,]>(() => GetContainer2DArray(_inventoryItems));
         _itemLabels = new TimeCache<List<ItemData>>(UpdateCurrentLabels, 500);
         _chestLabels = new TimeCache<List<LabelOnGround>>(UpdateChestList, 200);
@@ -113,6 +113,15 @@ public partial class PickIt : BaseSettingsPlugin<PickItSettings>
         {
             _pickUpTask = null;
         }
+
+        if (Settings.FilterTest.Value is { Length: > 0 } &&
+            GameController.IngameState.UIHover is { Address: not 0 } h &&
+            h.Entity.IsValid)
+        {
+            var f = ItemFilter.FromString(Settings.FilterTest);
+            var matched = f.Matches(new ItemData(null, h.Entity, GameController.Files));
+            DebugWindow.LogMsg($"Debug item match: {matched}");
+        }
     }
 
     //TODO: Make function pretty
@@ -158,7 +167,7 @@ public partial class PickIt : BaseSettingsPlugin<PickItSettings>
 
     private bool DoWePickThis(ItemData item)
     {
-        return Settings.PickUpEverything || 
+        return Settings.PickUpEverything ||
                (_itemFilter?.Matches(item) ?? false);
     }
 
@@ -180,8 +189,8 @@ public partial class PickIt : BaseSettingsPlugin<PickItSettings>
             .Where(x => x.Address != 0 &&
                         x.IsVisible &&
                         (Settings.IgnoreCanPickUp || x.CanPickUp) &&
-                        x.ItemOnGround.Path is {} path && 
-                        (path.StartsWith("Metadata/Chests/LeaguesExpedition/") || 
+                        x.ItemOnGround.Path is { } path &&
+                        (path.StartsWith("Metadata/Chests/LeaguesExpedition/") ||
                          path.StartsWith("Metadata/Chests/LegionChests/") ||
                          path.StartsWith("Metadata/Chests/Blight") ||
                          path.StartsWith("Metadata/Chests/Breach/") ||

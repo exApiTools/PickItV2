@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using ExileCore.PoEMemory;
@@ -65,12 +66,14 @@ public class ItemData
 
     public int AttemptedPickups = 0;
 
-    public ItemData(LabelOnGround queriedItem, FilesContainer fs)
+    public ItemData(LabelOnGround queriedItem, FilesContainer fs) :
+        this(queriedItem, queriedItem.ItemOnGround?.GetComponent<WorldItem>()?.ItemEntity, fs)
+    {
+    }
+
+    public ItemData(LabelOnGround queriedItem, Entity groundItem, FilesContainer fs)
     {
         LabelOnGround = queriedItem;
-        var itemItemOnGround = queriedItem.ItemOnGround;
-        var worldItem = itemItemOnGround?.GetComponent<WorldItem>();
-        var groundItem = worldItem?.ItemEntity;
         if (groundItem == null) return;
         GroundItem = groundItem;
         var item = groundItem;
@@ -165,140 +168,81 @@ public class ItemData
             x.ToLookup(char.ToLowerInvariant) is var lookup &&
             groupText.GroupBy(char.ToLowerInvariant).All(g => lookup[g.Key].Count() >= g.Count()));
 
-    public List<ItemMod> FindMods(string wantedMod) => ItemMods.Where(item => item.Name.ToLower().Contains(wantedMod.ToLower()))
-                    .Select(item => item)
-                    .ToList();
+    public List<ItemMod> FindMods(string wantedMod) => ItemMods
+        .Where(item => item.Name.Contains(wantedMod, StringComparison.OrdinalIgnoreCase)).ToList();
 
-    public List<int> MatchModsSum(string[] wantedMods)
+    public IReadOnlyDictionary<GameStat, int> ModStats(params string[] wantedMods)
     {
-        List<List<int>> foundValues = new List<List<int>>();
-
-        foreach (var wantedMod in wantedMods)
+        if (ItemMods == null)
         {
-            var foundMod = ItemMods.FirstOrDefault(item => item.Name.ToLower() == wantedMod.ToLower());
-            if (foundMod == null)
-            {
-                return null;
-            }
-
-            foundValues.Add(foundMod.Values);
+            return new DefaultDictionary<GameStat, int>(0);
         }
 
-        if (foundValues.Count == wantedMods.Length)
-        {
-            return SumIntListValues(foundValues);
-        }
-
-        return null;
+        return SumModStats(ItemMods.IntersectBy(wantedMods, x => x.Name, StringComparer.OrdinalIgnoreCase));
     }
 
-    public List<int> MatchModsWeightedSum(Dictionary<string, int> wantedMods)
+    public IReadOnlyDictionary<GameStat, int> ItemStats
     {
-        List<List<int>> foundValues = new List<List<int>>();
-
-        foreach (var wantedMod in wantedMods)
+        get
         {
-            var foundMod = ItemMods?.FirstOrDefault(item => item.Name.ToLower() == wantedMod.Key);
-            if (foundMod == null)
+            if (ItemMods == null)
             {
-                return null;
+                return new DefaultDictionary<GameStat, int>(0);
             }
 
-            var valueList = new List<int>();
-            foreach (var value in foundMod.Values)
-            {
-                valueList.Add(value * wantedMod.Value);
-            }
-            foundValues.Add(valueList);
+            return SumModStats(ItemMods);
         }
-
-        if (foundValues.Count == wantedMods.Count)
-        {
-            return SumIntListValues(foundValues);
-        }
-
-        return null;
     }
 
-    public List<int> AnyModsSum(string[] wantedMods)
+    public IReadOnlyDictionary<GameStat, float> ModWeightedStatSum(params (string, float)[] wantedMods)
     {
-        List<List<int>> foundValues = new List<List<int>>();
-
-        foreach (var wantedMod in wantedMods)
+        if (ItemMods == null)
         {
-            var foundMod = ItemMods?.FirstOrDefault(item => item.Name.ToLower() == wantedMod.ToLower());
-            if (foundMod != null)
-            {
-                foundValues.Add(foundMod.Values);
-            }
+            return new DefaultDictionary<GameStat, float>(0);
         }
 
-        return SumIntListValues(foundValues);
+        return SumModStats(ItemMods.Join(wantedMods, x => x.Name, x => x.Item1, (mod, w) => (mod, w.Item2), StringComparer.OrdinalIgnoreCase));
     }
 
-    // currently doesnt work due to Type Dictionary not found
-    public List<int> AnyModsWeightedSum(Dictionary<string, int> wantedMods)
+    public IReadOnlyDictionary<GameStat, float> ModWeightedStatSum(Dictionary<string, float> wantedMods)
     {
-        List<List<int>> foundValues = new List<List<int>>();
-
-        foreach (var wantedMod in wantedMods)
+        if (ItemMods == null)
         {
-            var foundMod = ItemMods?.FirstOrDefault(item => item.Name.ToLower() == wantedMod.Key);
-            if (foundMod != null)
-            {
-                var valueList = new List<int>();
-                foreach (var value in foundMod.Values) 
-                {
-                    valueList.Add(value * wantedMod.Value);
-                }
-                foundValues.Add(valueList);
-            }
+            return new DefaultDictionary<GameStat, float>(0);
         }
 
-        return SumIntListValues(foundValues);
+        return SumModStats(ItemMods.Join(wantedMods, x => x.Name, x => x.Key, (mod, w) => (mod, w.Value), StringComparer.OrdinalIgnoreCase));
     }
 
-    public bool HasMods(string[] wantedMods)
+    public bool HasMods(params string[] wantedMods)
     {
-        List<List<int>> foundValues = new List<List<int>>();
-
-        foreach (var wantedMod in wantedMods)
-        {
-            var foundMod = ItemMods?.FirstOrDefault(item => item.Name.ToLower() == wantedMod.ToLower());
-            if (foundMod != null)
-            {
-                foundValues.Add(foundMod.Values);
-            }
-        }
-
-        if (foundValues.Count == wantedMods.Length)
-        {
-            return true;
-        }
-
-        return false;
+        return ItemMods != null &&
+               ItemMods.IntersectBy(wantedMods, x => x.Name, StringComparer.OrdinalIgnoreCase)
+                   .Count() == wantedMods.Length;
     }
 
-    public List<int> SumIntListValues(List<List<int>> lists)
+    public static IReadOnlyDictionary<GameStat, int> SumModStats(IEnumerable<ItemMod> mods)
     {
-        int maxLength = lists.SelectMany(list => list).Count();
-        List<int> combinedList = new List<int>();
-
-        for (int i = 0; i < maxLength; i++)
-        {
-            int sum = 0;
-            foreach (var list in lists)
-            {
-                if (i < list.Count)
-                {
-                    sum += list[i];
-                }
-            }
-            combinedList.Add(sum);
-        }
-
-        return combinedList;
+        return new DefaultDictionary<GameStat, int>(mods
+            .SelectMany(x => x.ModRecord.StatNames.Zip(x.Values, (name, value) => (name.MatchingStat, value)))
+            .GroupBy(x => x.MatchingStat, x => x.value, (stat, values) => (stat, values.Sum()))
+            .ToDictionary(x => x.stat, x => x.Item2), 0);
     }
+
+    public static IReadOnlyDictionary<GameStat, int> SumModStats(params ItemMod[] mods) =>
+        SumModStats((IEnumerable<ItemMod>)mods);
+
+    public static IReadOnlyDictionary<GameStat, float> SumModStats(IEnumerable<(ItemMod mod, float weight)> mods)
+    {
+        return new DefaultDictionary<GameStat, float>(mods
+            .SelectMany(x => x.mod.ModRecord.StatNames.Zip(x.mod.Values, (name, value) => (name.MatchingStat, value: value * x.weight)))
+            .GroupBy(x => x.MatchingStat, x => x.value, (stat, values) => (stat, values.Sum()))
+            .ToDictionary(x => x.stat, x => x.Item2), 0);
+    }
+
+    public static IReadOnlyDictionary<GameStat, float> SumModStats(params (ItemMod mod, float weight)[] mods) =>
+        SumModStats((IEnumerable<(ItemMod mod, float weight)>)mods);
+
 
     public override string ToString()
     {
