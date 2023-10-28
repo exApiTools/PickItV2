@@ -30,7 +30,7 @@ public partial class PickIt : BaseSettingsPlugin<PickItSettings>
     private readonly CachedValue<bool[,]> _inventorySlotsCache;
     private ServerInventory _inventoryItems;
     private SyncTask<bool> _pickUpTask;
-    private List<ItemFilterData> _itemFilterData;
+    private ItemFilter _itemFilter;
     private bool[,] InventorySlots => _inventorySlotsCache.Value;
     private readonly Stopwatch _sinceLastClick = Stopwatch.StartNew();
 
@@ -156,26 +156,10 @@ public partial class PickIt : BaseSettingsPlugin<PickItSettings>
         }
     }
 
-    private bool DoWePickThis(ItemData item, List<ItemFilterData> filterData)
+    private bool DoWePickThis(ItemData item)
     {
-        foreach (var cachedQuery in filterData)
-        {
-            try
-            {
-                var result = cachedQuery.CompiledQuery.DynamicInvoke(item);
-                if (result is bool && (bool)result)
-                {
-                    DebugWindow.LogMsg($"Evaluation Result: ({(bool)result}) Line # {cachedQuery.InitialLine} Entry({cachedQuery.Query}) on Item({item.BaseName})", 10);
-                    return true; // Stop further checks once a match is found
-                }
-            }
-            catch (Exception ex)
-            {
-                DebugWindow.LogError($"Evaluation Error! Line # {cachedQuery.InitialLine} Entry: '{cachedQuery.Query}' Trigger Item {item.BaseName}\n{ex.StackTrace}");
-                return false;
-            }
-        }
-        return false;
+        return Settings.PickUpEverything || 
+               (_itemFilter?.Matches(item) ?? false);
     }
 
     private List<ItemData> UpdateCurrentLabels()
@@ -265,8 +249,8 @@ public partial class PickIt : BaseSettingsPlugin<PickItSettings>
             GameController.IngameState.UIHoverTooltip.Address == portalLabel.Address ||
             GameController.IngameState.UIHoverTooltip.Address == portalLabel.ItemOnGround.Address ||
             GameController.IngameState.UIHoverTooltip.Address == portalLabel.Label.Address ||
-            portalLabel?.ItemOnGround?.HasComponent<Targetable>() == true &&
-            portalLabel?.ItemOnGround?.GetComponent<Targetable>()?.isTargeted == true;
+            portalLabel.ItemOnGround?.HasComponent<Targetable>() == true &&
+            portalLabel.ItemOnGround?.GetComponent<Targetable>()?.isTargeted == true;
     }
 
     private static bool IsPortalNearby(LabelOnGround portalLabel, LabelOnGround pickItItem)
@@ -324,11 +308,11 @@ public partial class PickIt : BaseSettingsPlugin<PickItSettings>
             var filterFilePath = Path.Combine(pickitConfigFileDirectory, $"{Settings.FilterFile.Value}.txt");
             if (File.Exists(filterFilePath))
             {
-                _itemFilterData = ItemFilter.Load(filterFilePath);
+                _itemFilter = ItemFilter.Load(filterFilePath);
             }
             else
             {
-                _itemFilterData = null;
+                _itemFilter = null;
                 LogError("Item filter file not found, plugin will not work");
             }
         }
@@ -343,7 +327,7 @@ public partial class PickIt : BaseSettingsPlugin<PickItSettings>
                         && x.AttemptedPickups == 0
                         && x.Distance < Settings.PickupRange
                         && IsLabelClickable(x.LabelOnGround)
-                        && DoWePickThis(x, _itemFilterData)
+                        && DoWePickThis(x)
                         && (Settings.PickUpWhenInventoryIsFull || CanFitInventory(x)))
             .MinBy(x => x.Distance);
 
@@ -363,7 +347,7 @@ public partial class PickIt : BaseSettingsPlugin<PickItSettings>
                 }
             }
 
-            if (pickUpThisItem is not { IsValid: true })
+            if (pickUpThisItem == null)
             {
                 return true;
             }

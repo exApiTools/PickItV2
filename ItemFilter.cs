@@ -6,87 +6,133 @@ using System.Linq.Expressions;
 using System.Linq.Dynamic.Core;
 using SharpDX;
 using System.Linq;
-using PickIt;
-using MoreLinq;
+using System.Linq.Dynamic.Core.Exceptions;
 
-namespace PickIt
+namespace PickIt;
+
+public class ItemFilterData
 {
-    public class ItemFilterData
+    public string Query { get; set; }
+    public string RawQuery { get; set; }
+    public Func<ItemData, bool> CompiledQuery { get; set; }
+    public int InitialLine { get; set; }
+}
+
+public class ItemFilter
+{
+    private readonly List<ItemFilterData> _queries;
+
+    private static readonly ParsingConfig ParsingConfig = new ParsingConfig()
     {
-        public string Query { get; set; }
-        public Func<ItemData, bool> CompiledQuery { get; set; }
-        public int InitialLine { get; set; }
+        AllowNewToEvaluateAnyType = true,
+        ResolveTypesBySimpleName = true,
+        CustomTypeProvider = new CustomDynamicLinqCustomTypeProvider(),
+    };
+
+    private ItemFilter(List<ItemFilterData> queries)
+    {
+        _queries = queries;
     }
-    public class ItemFilter
+
+    public static ItemFilter Load(string filterFilePath)
     {
-        public static List<ItemFilterData> Load(string filterFilePath)
-        {
-            return CacheQueries(filterFilePath);
-        }
+        return new ItemFilter(GetQueries(filterFilePath));
+    }
 
-        private static List<ItemFilterData> CacheQueries(string filterFilePath)
+    public bool Matches(ItemData item)
+    {
+        foreach (var cachedQuery in _queries)
         {
-            var _compiledQueries = new List<ItemFilterData>();
-            var lines = File.ReadAllLines(filterFilePath);
-            var sections = new List<string>();
-            var section = string.Empty;
-            var sectionLineNumber = 0;
-            var sanitizedLineNumber = 0;
-
-            foreach (var (line, index) in lines.Select((value, i) => (value, i)))
+            try
             {
-                if (!string.IsNullOrWhiteSpace(line) && !line.TrimStart().StartsWith("//"))
+                if (cachedQuery.CompiledQuery(item))
                 {
-                    if (string.IsNullOrEmpty(section))
-                    {
-                        sectionLineNumber = index + 1;
-                        sanitizedLineNumber = sectionLineNumber; // Set sanitizedLineNumber at the start of each section
-                    }
-                    section += line + "\n";
-                }
-                else if (!string.IsNullOrEmpty(section))
-                {
-                    try
-                    {
-                        string[] parts = section.Split(new[] { "//" }, StringSplitOptions.None);
-                        string sanitizedQuery = SanitizeQuery(parts[0].Trim());
-                        LambdaExpression lambda = ParseItemDataLambda(sanitizedQuery);
-                        var compiledLambda = lambda.Compile();
-                        _compiledQueries.Add(new ItemFilterData
-                        {
-                            Query = section,
-                            CompiledQuery = (Func<ItemData, bool>)compiledLambda,
-                            InitialLine = sanitizedLineNumber
-                        });
-                    }
-                    catch (Exception e)
-                    {
-                        DebugWindow.LogError($"[ItemQueryProcessor] Error caching query ({section}) on Line # {sanitizedLineNumber}: {e.Message}", 30);
-                    }
-                    sections.Add(section.Trim());
-                    section = string.Empty;
+                    DebugWindow.LogMsg($"Matched line # {cachedQuery.InitialLine} Entry({cachedQuery.Query}) on Item({item.BaseName})", 10);
+                    return true; // Stop further checks once a match is found
                 }
             }
-
-            DebugWindow.LogMsg($@"[ItemQueryProcessor] Processed {filterFilePath.Split("\\").LastOrDefault()} with {_compiledQueries.Count} queries", 15, Color.Orange);
-            return _compiledQueries;
+            catch (Exception ex)
+            {
+                DebugWindow.LogError($"Evaluation Error! Line # {cachedQuery.InitialLine} Entry: '{cachedQuery.Query}' Item {item.BaseName}\n{ex}");
+                return false;
+            }
         }
 
+        return false;
+    }
 
+    private static List<ItemFilterData> GetQueries(string filterFilePath)
+    {
+        var compiledQueries = new List<ItemFilterData>();
+        var rawLines = File.ReadAllLines(filterFilePath);
+        var lines = SplitQueries(rawLines);
 
-        private static LambdaExpression ParseItemDataLambda(string expression)
+        foreach (var (query, rawQuery, initialLine) in lines)
         {
-            ParameterExpression itemParameter = Expression.Parameter(typeof(ItemData), "item");
-            return DynamicExpressionParser.ParseLambda(
-                new[] { itemParameter },
-                typeof(bool),
-                expression);
+            try
+            {
+                var lambda = ParseItemDataLambda(query);
+                var compiledLambda = lambda.Compile();
+                compiledQueries.Add(new ItemFilterData
+                {
+                    Query = query,
+                    RawQuery = rawQuery,
+                    CompiledQuery = compiledLambda,
+                    InitialLine = initialLine
+                });
+            }
+            catch (Exception ex)
+            {
+                var exMessage = ex is ParseException parseEx
+                    ? $"{parseEx.Message} (at index {parseEx.Position})"
+                    : ex.ToString();
+                DebugWindow.LogError($"[ItemQueryProcessor] Error processing query ({query}) on Line # {initialLine}: {exMessage}");
+            }
         }
 
-        private static string SanitizeQuery(string query)
+        DebugWindow.LogMsg($@"[ItemQueryProcessor] Processed {filterFilePath.Split("\\").LastOrDefault()} with {compiledQueries.Count} queries", 2, Color.Orange);
+        return compiledQueries;
+    }
+
+    private static List<(string section, string rawSection, int sectionStartLine)> SplitQueries(string[] rawLines)
+    {
+        string section = null;
+        string rawSection = null;
+        var sectionStartLine = 0;
+        var lines = new List<(string section, string rawSection, int sectionStartLine)>();
+
+        foreach (var (line, index) in rawLines.Append("").Select((value, i) => (value, i)))
         {
-            // for later if there is more to do.
-            return query;
+            if (!string.IsNullOrWhiteSpace(line))
+            {
+                var lineWithoutComment = line.IndexOf("//", StringComparison.Ordinal) is var commentIndex and not -1
+                    ? line[..commentIndex]
+                    : line;
+                if (section == null)
+                {
+                    sectionStartLine = index + 1; // Set at the start of each section
+                }
+
+                section += $"{lineWithoutComment}\n";
+                rawSection += $"{line}\n";
+            }
+            else
+            {
+                if (!string.IsNullOrWhiteSpace(section))
+                {
+                    lines.Add((section, rawSection.TrimEnd('\n'), sectionStartLine));
+                }
+
+                section = null;
+                rawSection = null;
+            }
         }
+
+        return lines;
+    }
+
+    private static Expression<Func<ItemData, bool>> ParseItemDataLambda(string expression)
+    {
+        return DynamicExpressionParser.ParseLambda<ItemData, bool>(ParsingConfig, false, expression);
     }
 }

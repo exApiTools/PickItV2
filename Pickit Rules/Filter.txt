@@ -1,177 +1,184 @@
-item.BaseName == "Armourer's Scrap"
+BaseName == "Armourer's Scrap"
 
-item.BaseName == "Awakened Sextant"
+BaseName == "Awakened Sextant"
 
-item.BaseName == "Blacksmith's Whetstone"
+BaseName == "Blacksmith's Whetstone"
 
-item.BaseName == "Blessed Orb"
+BaseName == "Blessed Orb"
 
-item.BaseName == "Cartographer's Chisel"
+BaseName == "Cartographer's Chisel"
 
-item.BaseName == "Chaos Orb"
+BaseName == "Chaos Orb"
 
-item.BaseName == "Chromatic Orb"
+BaseName == "Chromatic Orb"
 
-item.BaseName == "Divine Orb"
+BaseName == "Divine Orb"
 
-item.BaseName == "Enkindling Orb"
+BaseName == "Enkindling Orb"
 
-item.BaseName == "Exalted Orb"
+BaseName == "Exalted Orb"
 
-item.BaseName == "Gemcutter's Prism"
+BaseName == "Gemcutter's Prism"
 
-item.BaseName == "Glassblower's Bauble"
+BaseName == "Glassblower's Bauble"
 
-item.BaseName == "Instilling Orb"
+BaseName == "Instilling Orb"
 
-item.BaseName == "Jeweller's Orb"
+BaseName == "Jeweller's Orb"
 
-item.BaseName == "Lesser Eldritch Ember"
+BaseName == "Lesser Eldritch Ember"
 
-item.BaseName == "Lesser Eldritch Ichor"
+BaseName == "Lesser Eldritch Ichor"
 
-item.BaseName == "Mirror of Kalandra"
+BaseName == "Mirror of Kalandra"
 
-item.BaseName == "Orb of Alchemy"
+BaseName == "Orb of Alchemy"
 
-item.BaseName == "Orb of Alteration"
+BaseName == "Orb of Alteration"
 
-item.BaseName == "Orb of Annulment"
+BaseName == "Orb of Annulment"
 
-item.BaseName == "Orb of Augmentation"
+BaseName == "Orb of Augmentation"
 
-item.BaseName == "Orb of Binding"
+BaseName == "Orb of Binding"
 
-item.BaseName == "Orb of Chance"
+BaseName == "Orb of Chance"
 
-item.BaseName == "Orb of Fusing"
+BaseName == "Orb of Fusing"
 
-item.BaseName == "Orb of Horizons"
+BaseName == "Orb of Horizons"
 
-item.BaseName == "Orb of Regret"
+BaseName == "Orb of Regret"
 
-item.BaseName == "Orb of Scouring"
+BaseName == "Orb of Scouring"
 
-item.BaseName == "Orb of Transmutation"
+BaseName == "Orb of Transmutation"
 
-item.BaseName == "Orb of Unmaking"
+BaseName == "Orb of Unmaking"
 
-item.BaseName == "Portal Scroll"
+BaseName == "Portal Scroll"
 
-item.BaseName == "Regal Orb" // the regal boy
+BaseName == "Regal Orb" // the regal boy
 
-item.BaseName == "Rogue's Marker"
+BaseName == "Rogue's Marker"
 
-item.BaseName == "Sacred Orb"
+BaseName == "Sacred Orb"
 
-item.BaseName == "Scroll of Wisdom"
+BaseName == "Scroll of Wisdom"
 
-item.BaseName == "Stacked Deck"
+BaseName == "Stacked Deck"
 
-item.BaseName == "Surveyor's Compass"
+BaseName == "Surveyor's Compass"
 
-item.BaseName == "Vaal Orb"
+BaseName == "Vaal Orb"
 
-item.BaseName == "Veiled Chaos Orb"
+BaseName == "Veiled Chaos Orb"
 
-item.BaseName == "Alchemy Shard"
+BaseName == "Alchemy Shard"
 
-item.BaseName == "Alteration Shard"
+BaseName == "Alteration Shard"
 
-item.BaseName == "Ancient Shard"
+BaseName == "Ancient Shard"
 
-item.BaseName == "Annulment Shard"
+BaseName == "Annulment Shard"
 
-item.BaseName == "Binding Shard"
+BaseName == "Binding Shard"
 
-item.BaseName == "Chaos Shard"
+BaseName == "Chaos Shard"
 
-item.BaseName == "Engineer's Shard"
+BaseName == "Engineer's Shard"
 
-item.BaseName == "Exalted Shard"
+BaseName == "Exalted Shard"
 
-item.BaseName == "Fracturing Shard"
+BaseName == "Fracturing Shard"
 
-item.BaseName == "Harbinger's Shard"
+BaseName == "Harbinger's Shard"
 
-item.BaseName == "Horizon Shard"
+BaseName == "Horizon Shard"
 
-item.BaseName == "Mirror Shard"
+BaseName == "Mirror Shard"
 
-item.BaseName == "Regal Shard"
+BaseName == "Regal Shard"
 
-item.BaseName == "Scroll Fragment"
+BaseName == "Scroll Fragment"
 
-item.BaseName == "Transmutation Shard"
+BaseName == "Transmutation Shard"
 
-item.BaseName == "Awakener's Orb"
+BaseName == "Awakener's Orb"
 
-item.BaseName == "Crescent Splinter"
+BaseName == "Crescent Splinter"
 
-item.BaseName == "Crusader's Exalted Orb"
+BaseName == "Crusader's Exalted Orb"
 
-item.BaseName == "Eldritch Chaos Orb"
+BaseName == "Eldritch Chaos Orb"
 
-item.BaseName == "Eldritch Exalted Orb"
+BaseName == "Eldritch Exalted Orb"
 
-item.BaseName == "Eldritch Orb of Annulment"
+BaseName == "Eldritch Orb of Annulment"
 
-item.BaseName == "Elevated Sextant"
+BaseName == "Elevated Sextant"
 
-item.BaseName == "Exceptional Eldritch Ember"
+BaseName == "Exceptional Eldritch Ember"
 
-item.BaseName == "Exceptional Eldritch Ichor"
+BaseName == "Exceptional Eldritch Ichor"
 
-item.BaseName == "Grand Eldritch Ember"
+BaseName == "Grand Eldritch Ember"
 
-item.BaseName == "Grand Eldritch Ichor"
+BaseName == "Grand Eldritch Ichor"
 
-item.BaseName == "Greater Eldritch Ember"
+BaseName == "Greater Eldritch Ember"
 
-item.BaseName == "Greater Eldritch Ichor"
+BaseName == "Greater Eldritch Ichor"
 
-item.BaseName == "Hunter's Exalted Orb"
+BaseName == "Hunter's Exalted Orb"
 
-item.BaseName == "Orb of Conflict"
+BaseName == "Orb of Conflict"
 
-item.BaseName == "Orb of Dominance"
+BaseName == "Orb of Dominance"
 
-item.BaseName == "Redeemer's Exalted Orb"
+BaseName == "Redeemer's Exalted Orb"
 
-item.BaseName == "Warlord's Exalted Orb"
+BaseName == "Warlord's Exalted Orb"
 
-item.GemInfo != null 
-&& (item.GemInfo.QualityType == ISkillGemQualityTypeE.Anomalous 
-|| item.GemInfo.QualityType == ISkillGemQualityTypeE.Phantasmal 
-|| item.GemInfo.QualityType == ISkillGemQualityTypeE.Divergent) // Alt quality gems
+GemInfo != null 
+&& (GemInfo.QualityType == SkillGemQualityTypeE.Anomalous 
+|| GemInfo.QualityType == SkillGemQualityTypeE.Phantasmal 
+|| GemInfo.QualityType == SkillGemQualityTypeE.Divergent) // Alt quality gems
 
-item.ClassName == "HeistObjective" // Heist items
+ClassName == "HeistObjective" // Heist items
 
-item.ItemLevel >= 86 && isInfluenced && Rarity <= IItemRarity.Rare // ilvl 86+ influenced non uniques
+ItemLevel >= 86 && isInfluenced && Rarity <= ItemRarity.Rare // ilvl 86+ influenced non uniques
 
-item.isMap && item.MapTier >= 13 // Tier 13+ maps
+isMap && MapTier >= 13 // Tier 13+ maps
 
-//item.NumberOfSockets > 0 
-//&& item.SocketLinks.Any(current => current.Length >= 3 
+//&& SocketInfo.Links.Any(current => current.Length >= 3 
 //&& current.Contains(1) 
 //&& current.Contains(2) 
 //&& current.Contains(3)) // RGB
 
-item.NumberOfSockets > 0 
-&& item.SocketLinks.Any(links => links.Count(link => link == 1) == 1
+HasUnorderedSocketGroup("RGB")
+
+SocketInfo.SocketNumber > 0 
+&& SocketInfo.Links.Any(links => links.Count(link => link == 1) == 1
 && links.Count(link => link == 2) == 2
 && links.Count(link => link == 3) == 3) // link needs 3 Blue 2 Greens 1 Red  [Red = 1, Green = 2, Blue = 3, White = 4]
 
-item.GemInfo != null && item.BaseName.Contains("Flame Dash") && item.BaseName.Contains("Freezing Pulse") // wanted gems for early leveling and other shit
+GemInfo != null && BaseName.Contains("Flame Dash") && BaseName.Contains("Freezing Pulse") // wanted gems for early leveling and other shit
 
-item.ItemMods.Any(itemMod 
-=> itemMod.Name.ToLower().Contains("CriticalMultiplier".ToLower())
-&& itemMod.Values != null
-&& itemMod.Values.Count >= 0
-&& itemMod.Values[0] > 30)
+ItemMods.Any( 
+$.Name.ToLower().Contains("CriticalMultiplier".ToLower())
+&& $.Values != null
+&& $.Values.Count >= 0
+&& $.Values[0] > 30)
 
-item.ClassName == "DivinationCard" // div cards
+//FindModds("fireresist").Any(Values[0] >= 20) && FindMods("coldresist").Any(Values[0] >= 20)
 
-item.BaseName == "Treasure Key" && item.BaseName == "Golden Key" && item.BaseName == "Silver Key" // lab + incursion pickups
+ClassName == "DivinationCard" // div cards
 
-item.isMap && item.MapTier >= 1 // Tier 1+ maps
+BaseName == "Treasure Key" && BaseName == "Golden Key" && BaseName == "Silver Key" // lab + incursion pickups
+
+isMap && MapTier >= 1 // Tier 1+ maps
+
+SocketInfo.SocketNumber == 4 && HasUnorderedSocketGroup("rb") // 4 sockets with a link that has 2 reds and a blue
+
+np(FindMods(new string[] { "FireResist", "ColdResist" }).FirstOrDefault(x => x >= 72)) != null // test func
