@@ -123,7 +123,9 @@ public class ItemData
 
         if (item.TryGetComponent<Sockets>(out var sockets))
         {
-            SocketInfo = new SocketData(sockets.LargestLinkSize, sockets.NumberOfSockets, sockets.Links, sockets.SocketGroup);
+            // issue to be resolved in core, if a corrupted ring with sockets gets a new implicit it will still have the component but the component logic will throw an exception
+            if (sockets.NumberOfSockets > 0)
+                SocketInfo = new SocketData(sockets.LargestLinkSize, sockets.NumberOfSockets, sockets.Links, sockets.SocketGroup);
         }
 
         if (item.TryGetComponent<SkillGem>(out var gem))

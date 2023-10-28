@@ -242,13 +242,14 @@ ClassName == "MapFragment"
 //----------------------------------------------
 HasMods(new string[] { "MetamorphosisItemisedBossRewards" }) // Metamorph Organ
 
-BaseName == "Treasure Key" 
-&& BaseName == "Golden Key" 
-&& BaseName == "Silver Key" // Lab
+BaseName == "Treasure Key" && 
+BaseName == "Golden Key" &&
+BaseName == "Silver Key" // Lab
 
 BaseName == "Stone of Passage" // Incursion
 
-ClassName == "HeistObjective" // Heist items
+ClassName == "HeistObjective" || 
+ClassName == "HeistContract" // Heist items
 
 ClassName == "ItemisedSanctum" // Sanctum items, need to check if this is all or not
 
@@ -311,7 +312,7 @@ $.Name.ToLower().Contains("CriticalMultiplier".ToLower())
 && $.Values.Count >= 0
 && $.Values[0] > 30) // crit multi over 30
 
-SocketInfo != null && (HasUnorderedSocketGroup("RGB") || HasUnorderedSocketGroup("RGG") || HasUnorderedSocketGroup("RB")) // link atleast has RGB or RGG or RB
+//SocketInfo != null && (HasUnorderedSocketGroup("RGB") || HasUnorderedSocketGroup("RGG") || HasUnorderedSocketGroup("RB")) // link atleast has RGB or RGG or RB
 
 //FindModds("fireresist").Any(Values[0] >= 20) && FindMods("coldresist").Any(Values[0] >= 20)
 
