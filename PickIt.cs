@@ -119,7 +119,7 @@ public partial class PickIt : BaseSettingsPlugin<PickItSettings>
             h.Entity.IsValid)
         {
             var f = ItemFilter.FromString(Settings.FilterTest);
-            var matched = f.Matches(new ItemData(null, h.Entity, GameController.Files));
+            var matched = f.Matches(new ItemData(h.Entity, GameController.Files, null));
             DebugWindow.LogMsg($"Debug item match: {matched}");
         }
     }
@@ -327,7 +327,7 @@ public partial class PickIt : BaseSettingsPlugin<PickItSettings>
         if (!GameController.Window.IsForeground()) return true;
         var pickUpThisItem = _itemLabels
             .Value?
-            .Where(x => x.GroundItem != null
+            .Where(x => x.Entity != null
                         && x.AttemptedPickups == 0
                         && x.Distance < Settings.PickupRange
                         && IsLabelClickable(x.LabelOnGround)
