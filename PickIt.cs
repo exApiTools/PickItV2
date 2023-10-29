@@ -18,6 +18,7 @@ using System.Threading;
 using System.Threading.Tasks;
 using ExileCore.Shared.Enums;
 using SDxVector2 = SharpDX.Vector2;
+using ItemFilterLibrary;
 
 namespace PickIt;
 

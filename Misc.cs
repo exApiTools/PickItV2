@@ -3,6 +3,7 @@ using System.Linq;
 using ExileCore.PoEMemory.Components;
 using ExileCore.PoEMemory.MemoryObjects;
 using SharpDX;
+using ItemFilterLibrary;
 
 namespace PickIt;
 
