@@ -51,17 +51,22 @@ public partial class PickIt
 
     private static bool CanItemBeStacked(ItemData item, ServerInventory.InventSlotItem inventoryItem)
     {
-        // return false if not the same item
-        if (item.GroundItem.Path != inventoryItem.Item.Path)
+        if (item.Entity.Path != inventoryItem.Item.Path)
             return false;
 
-        // return false if the items dont have the Stack component
-        // probably only need to do it on one item but for smoll brain reasons...here we go
-        if (!item.GroundItem.HasComponent<Stack>() || !inventoryItem.Item.HasComponent<Stack>())
+        if (!item.Entity.HasComponent<Stack>() || !inventoryItem.Item.HasComponent<Stack>())
             return false;
 
-        var itemStackComp = item.GroundItem.GetComponent<Stack>();
+        var itemStackComp = item.Entity.GetComponent<Stack>();
         var inventoryItemStackComp = inventoryItem.Item.GetComponent<Stack>();
+
+        /*
+         * Reserved if the itemlevel is ever found as incubators dont have a mods comp?? why.
+        if (item.BaseName.EndsWith(" Incubator") && inventoryItem.Item.HasComponent<Mods>())
+        {
+            return (item.ItemLevel == inventoryItem.Item.GetComponent<Mods>().ItemLevel) && inventoryItemStackComp.Size + itemStackComp.Size <= inventoryItemStackComp.Info.MaxStackSize;
+        }
+        */
 
         return inventoryItemStackComp.Size + itemStackComp.Size <= inventoryItemStackComp.Info.MaxStackSize;
     }
