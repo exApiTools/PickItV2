@@ -24,7 +24,6 @@ namespace PickIt;
 
 public partial class PickIt : BaseSettingsPlugin<PickItSettings>
 {
-    private const string PickitRuleDirectory = "Pickit Rules";
     private readonly TimeCache<List<LabelOnGround>> _chestLabels;
     private readonly TimeCache<List<ItemData>> _itemLabels;
     private readonly CachedValue<LabelOnGround> _portalLabel;
@@ -293,7 +292,7 @@ public partial class PickIt : BaseSettingsPlugin<PickItSettings>
 
     private void LoadRuleFiles()
     {
-        var pickitConfigFileDirectory = Path.Combine(DirectoryFullName, PickitRuleDirectory);
+        var pickitConfigFileDirectory = Path.Combine(ConfigDirectory);
 
         if (!Directory.Exists(pickitConfigFileDirectory))
         {

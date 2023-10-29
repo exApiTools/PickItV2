@@ -306,7 +306,7 @@ GemInfo != null
 || GemInfo.QualityType == SkillGemQualityTypeE.Phantasmal 
 || GemInfo.QualityType == SkillGemQualityTypeE.Divergent) // Alt quality gems
 
-ItemMods != null && ItemMods.Any( 
+ModsInfo.ItemMods.Any( 
 $.Name.ToLower().Contains("CriticalMultiplier".ToLower())
 && $.Values != null
 && $.Values.Count >= 0
