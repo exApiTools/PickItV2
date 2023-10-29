@@ -19,6 +19,7 @@ using System.Threading.Tasks;
 using ExileCore.Shared.Enums;
 using SDxVector2 = SharpDX.Vector2;
 using ItemFilterLibrary;
+using System.Linq.Dynamic.Core.Exceptions;
 
 namespace PickIt;
 
@@ -119,7 +120,7 @@ public partial class PickIt : BaseSettingsPlugin<PickItSettings>
             h.Entity.IsValid)
         {
             var f = ItemFilter.FromString(Settings.FilterTest);
-            var matched = f.Matches(new ItemData(h.Entity, GameController.Files, null));
+            var matched = f.Matches(new ItemData(h.Entity, GameController.Files));
             DebugWindow.LogMsg($"Debug item match: {matched}");
         }
     }
