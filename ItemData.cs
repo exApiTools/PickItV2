@@ -23,7 +23,7 @@ public class ItemData
 
     public record AttributeRequirementsData(int Strength, int Dexterity, int Intelligence);
 
-    public record ArmourData(int ArmourScore, int EvasionScore, int esScore);
+    public record ArmourData(int Armour, int Evasion, int ES);
 
     public record ModsData(List<ItemMod> ItemMods, List<ItemMod> EnchantedMods, List<ItemMod> ExplicitMods, List<ItemMod> FracturedMods, List<ItemMod> ImplicitMods, List<ItemMod> ScourgeMods, List<ItemMod> SynthesisMods, List<ItemMod> CrucibleMods);
 
@@ -65,6 +65,7 @@ public class ItemData
     public int Height { get; } = 0;
     public int Width { get; } = 0;
     public bool IsWeapon { get; } = false;
+    public int ShieldBlockChance { get; } = 0;
     public float Distance => LabelOnGround.ItemOnGround?.DistancePlayer ?? float.PositiveInfinity;
     public StackData StackInfo { get; } = new StackData(0, 0);
     public Entity Entity { get; }
@@ -206,8 +207,13 @@ public class ItemData
             ArmourInfo = new ArmourData(armourComp.ArmourScore, armourComp.EvasionScore, armourComp.EnergyShieldScore);
         }
 
+        if (item.TryGetComponent<Shield>(out var shieldComp))
+        {
+            ShieldBlockChance = shieldComp.ChanceToBlock;
+        }
+
         // Reserving as using VS for linq making is easier.
-        //var test = FlaskInfo.LifeRecovery > 9999;
+        var test = (ArmourInfo.Evasion + ArmourInfo.ES) >= 900;
     }
 
     public bool HasUnorderedSocketGroup(string groupText) =>
