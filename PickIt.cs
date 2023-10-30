@@ -25,7 +25,7 @@ namespace PickIt;
 public partial class PickIt : BaseSettingsPlugin<PickItSettings>
 {
     private readonly TimeCache<List<LabelOnGround>> _chestLabels;
-    private readonly TimeCache<List<ItemData>> _itemLabels;
+    private readonly TimeCache<List<PickItItemData>> _itemLabels;
     private readonly CachedValue<LabelOnGround> _portalLabel;
     private readonly CachedValue<bool[,]> _inventorySlotsCache;
     private ServerInventory _inventoryItems;
@@ -38,7 +38,7 @@ public partial class PickIt : BaseSettingsPlugin<PickItSettings>
     {
         Name = "PickItWithLinq";
         _inventorySlotsCache = new FrameCache<bool[,]>(() => GetContainer2DArray(_inventoryItems));
-        _itemLabels = new TimeCache<List<ItemData>>(UpdateCurrentLabels, 500);
+        _itemLabels = new TimeCache<List<PickItItemData>>(UpdateCurrentLabels, 500);
         _chestLabels = new TimeCache<List<LabelOnGround>>(UpdateChestList, 200);
         _portalLabel = new TimeCache<LabelOnGround>(() => GetLabel(@"Metadata/MiscellaneousObjects/.*Portal"), 200);
     }
@@ -160,13 +160,13 @@ public partial class PickIt : BaseSettingsPlugin<PickItSettings>
         }
     }
 
-    private bool DoWePickThis(ItemData item)
+    private bool DoWePickThis(PickItItemData item)
     {
         return Settings.PickUpEverything ||
                (_itemFilter?.Matches(item) ?? false);
     }
 
-    private List<ItemData> UpdateCurrentLabels()
+    private List<PickItItemData> UpdateCurrentLabels()
     {
         var window = GameController.Window.GetWindowRectangleTimeCache with { Location = SDxVector2.Zero };
         var labels = GameController.Game.IngameState.IngameUi.ItemsOnGroundLabelsVisible;
@@ -175,7 +175,7 @@ public partial class PickIt : BaseSettingsPlugin<PickItSettings>
                                   && window.Contains(x.Label.GetClientRectCache.Center)
                                   && (Settings.IgnoreCanPickUp || x.CanPickUp)
                                   && x.MaxTimeForPickUp.TotalSeconds <= 0)
-            .Select(x => new ItemData(x, GameController.Files))
+            .Select(x => new PickItItemData(x, GameController.Files))
             .ToList();
     }
 
