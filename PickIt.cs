@@ -301,7 +301,7 @@ public partial class PickIt : BaseSettingsPlugin<PickItSettings>
         }
 
         var dirInfo = new DirectoryInfo(pickitConfigFileDirectory);
-        Settings.FilterFile.Values = dirInfo.GetFiles("*.txt").Select(x => Path.GetFileNameWithoutExtension(x.Name)).ToList();
+        Settings.FilterFile.Values = dirInfo.GetFiles("*.ifl").Select(x => Path.GetFileNameWithoutExtension(x.Name)).ToList();
         if (Settings.FilterFile.Values.Any() && !Settings.FilterFile.Values.Contains(Settings.FilterFile.Value))
         {
             Settings.FilterFile.Value = Settings.FilterFile.Values.First();
@@ -309,7 +309,7 @@ public partial class PickIt : BaseSettingsPlugin<PickItSettings>
 
         if (!string.IsNullOrWhiteSpace(Settings.FilterFile.Value))
         {
-            var filterFilePath = Path.Combine(pickitConfigFileDirectory, $"{Settings.FilterFile.Value}.txt");
+            var filterFilePath = Path.Combine(pickitConfigFileDirectory, $"{Settings.FilterFile.Value}.ifl");
             if (File.Exists(filterFilePath))
             {
                 _itemFilter = ItemFilter.LoadFromPath(filterFilePath);
