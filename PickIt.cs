@@ -19,7 +19,6 @@ using System.Threading.Tasks;
 using ExileCore.Shared.Enums;
 using SDxVector2 = SharpDX.Vector2;
 using ItemFilterLibrary;
-using System.Linq.Dynamic.Core.Exceptions;
 
 namespace PickIt;
 
@@ -119,7 +118,7 @@ public partial class PickIt : BaseSettingsPlugin<PickItSettings>
             GameController.IngameState.UIHover is { Address: not 0 } h &&
             h.Entity.IsValid)
         {
-            var f = ItemFilter.FromString(Settings.FilterTest);
+            var f = ItemFilter.LoadFromString(Settings.FilterTest);
             var matched = f.Matches(new ItemData(h.Entity, GameController.Files));
             DebugWindow.LogMsg($"Debug item match: {matched}");
         }
@@ -313,7 +312,7 @@ public partial class PickIt : BaseSettingsPlugin<PickItSettings>
             var filterFilePath = Path.Combine(pickitConfigFileDirectory, $"{Settings.FilterFile.Value}.txt");
             if (File.Exists(filterFilePath))
             {
-                _itemFilter = ItemFilter.Load(filterFilePath);
+                _itemFilter = ItemFilter.LoadFromPath(filterFilePath);
             }
             else
             {
