@@ -298,10 +298,6 @@ public partial class PickIt : BaseSettingsPlugin<PickItSettings>
             return;
         }
 
-        // TODO: change itemFilter to be a List<rules>() that get LoadFromPath
-        //       then change DoWePickThis() to check all rule sets and return if any of them is returning true.
-        // TODO: LoadRuleFiles() should only repopulate the list and then load the current state of enabled files.
-        //       DrawSettings should add a new list to the rule list when the button gets pressed
         List<ItemFilter> tempFilters = new List<ItemFilter>();
         var tempPickitRules = Settings.PickitRules;
         var itemList = new List<FilterDirItem>();
