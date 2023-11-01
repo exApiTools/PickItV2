@@ -1,0 +1,159 @@
+//----------------------------------------------
+// All Currency
+//----------------------------------------------
+
+ClassName.EndsWith("Currency")
+
+//----------------------------------------------
+// Main Currency
+//----------------------------------------------
+
+//BaseName == "Armourer's Scrap"
+
+//BaseName == "Awakened Sextant"
+
+//BaseName == "Blacksmith's Whetstone"
+
+//BaseName == "Blessed Orb"
+
+//BaseName == "Cartographer's Chisel"
+
+//BaseName == "Chaos Orb"
+
+//BaseName == "Chromatic Orb"
+
+//BaseName == "Divine Orb"
+
+//BaseName == "Enkindling Orb"
+
+//BaseName == "Exalted Orb"
+
+//BaseName == "Gemcutter's Prism"
+
+//BaseName == "Glassblower's Bauble"
+
+//BaseName == "Instilling Orb"
+
+//BaseName == "Jeweller's Orb"
+
+//BaseName == "Lesser Eldritch Ember"
+
+//BaseName == "Lesser Eldritch Ichor"
+
+//BaseName == "Mirror of Kalandra"
+
+//BaseName == "Orb of Alchemy"
+
+//BaseName == "Orb of Alteration"
+
+//BaseName == "Orb of Annulment"
+
+//BaseName == "Orb of Augmentation"
+
+//BaseName == "Orb of Binding"
+
+//BaseName == "Orb of Chance"
+
+//BaseName == "Orb of Fusing"
+
+//BaseName == "Orb of Horizons"
+
+//BaseName == "Orb of Regret"
+
+//BaseName == "Orb of Scouring"
+
+//BaseName == "Orb of Transmutation"
+
+//BaseName == "Orb of Unmaking"
+
+//BaseName == "Portal Scroll"
+
+//BaseName == "Regal Orb"
+
+//BaseName == "Rogue's Marker"
+
+//BaseName == "Sacred Orb"
+
+//BaseName == "Scroll of Wisdom"
+
+//BaseName == "Stacked Deck"
+
+//BaseName == "Surveyor's Compass"
+
+//BaseName == "Vaal Orb"
+
+//BaseName == "Veiled Chaos Orb"
+
+//----------------------------------------------
+// Currency Shards
+//----------------------------------------------
+
+//BaseName == "Alchemy Shard"
+
+//BaseName == "Alteration Shard"
+
+//BaseName == "Ancient Shard"
+
+//BaseName == "Annulment Shard"
+
+//BaseName == "Binding Shard"
+
+//BaseName == "Chaos Shard"
+
+//BaseName == "Engineer's Shard"
+
+//BaseName == "Exalted Shard"
+
+//BaseName == "Fracturing Shard"
+
+//BaseName == "Harbinger's Shard"
+
+//BaseName == "Horizon Shard"
+
+//BaseName == "Mirror Shard"
+
+//BaseName == "Regal Shard"
+
+//BaseName == "Scroll Fragment"
+
+//BaseName == "Transmutation Shard"
+
+//BaseName == "Awakener's Orb"
+
+//----------------------------------------------
+// Exotic Currency
+//----------------------------------------------
+
+//BaseName == "Crescent Splinter"
+
+//BaseName == "Crusader's Exalted Orb"
+
+//BaseName == "Eldritch Chaos Orb"
+
+//BaseName == "Eldritch Exalted Orb"
+
+//BaseName == "Eldritch Orb of Annulment"
+
+//BaseName == "Elevated Sextant"
+
+//BaseName == "Exceptional Eldritch Ember"
+
+//BaseName == "Exceptional Eldritch Ichor"
+
+//BaseName == "Grand Eldritch Ember"
+
+//BaseName == "Grand Eldritch Ichor"
+
+//BaseName == "Greater Eldritch Ember"
+
+//BaseName == "Greater Eldritch Ichor"
+
+//BaseName == "Hunter's Exalted Orb"
+
+//BaseName == "Orb of Conflict"
+
+//BaseName == "Orb of Dominance"
+
+//BaseName == "Redeemer's Exalted Orb"
+
+//BaseName == "Warlord's Exalted Orb"

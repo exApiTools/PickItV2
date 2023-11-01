@@ -1,0 +1,25 @@
+//----------------------------------------------
+// Others
+//----------------------------------------------
+
+BaseName == "Crimson Jewel"
+
+//ModsInfo.ItemMods.Any( 
+//$.Name.ToLower().Contains("CriticalMultiplier".ToLower())
+//&& $.Values != null
+//&& $.Values.Count >= 0
+//&& $.Values[0] > 30) // crit multi over 30
+
+//SocketInfo != null && (HasUnorderedSocketGroup("RGB") || HasUnorderedSocketGroup("RGG") || HasUnorderedSocketGroup("RB")) // link atleast has RGB or RGG or RB
+
+//FindModds("fireresist").Any(Values[0] >= 20) && FindMods("coldresist").Any(Values[0] >= 20)
+
+//SocketInfo.SocketNumber == 4 && HasUnorderedSocketGroup("rb") // 4 sockets with a link that has 2 reds and a blue
+
+//MatchModsSum(new string[] { "FireResist", "ColdResist", "LightningResist" })[0] > 75 // Look for all these mods (null if not all found) with a total sum above value
+
+//AnyModsSum(new string[] { "FireResist", "ColdResist", "LightningResist" })[0] > 30 // look for any of these mods that produce a sum above value
+
+//HasMods(new string[] { "FireResist" }) // check if item has mod list
+
+//MatchModsWeightedSum(new (string, int)[] { ("FireResist", 2), ("LightningResist", 2) })[0] >= 89

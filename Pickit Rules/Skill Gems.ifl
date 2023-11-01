@@ -1,0 +1,14 @@
+//----------------------------------------------
+// Skill Gems
+//----------------------------------------------
+
+ClassName.Contains("Skill Gem") && ItemQuality >= 1 // quality gem
+
+ClassName.Contains("Skill Gem") && GemInfo.Level >= 20 // level 20+
+
+//ClassName.Contains("Skill Gem") && ItemQuality == 0 // non quality gem
+
+GemInfo != null 
+&& (GemInfo.QualityType == SkillGemQualityTypeE.Anomalous 
+|| GemInfo.QualityType == SkillGemQualityTypeE.Phantasmal 
+|| GemInfo.QualityType == SkillGemQualityTypeE.Divergent) // Alt quality gems

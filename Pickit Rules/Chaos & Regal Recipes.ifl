@@ -1,0 +1,39 @@
+//----------------------------------------------
+// Chaos Recipe
+//----------------------------------------------
+
+!IsIdentified && Rarity == ItemRarity.Rare && ItemLevel <= 74 && ItemLevel >= 60 && ClassName == "Ring"
+
+!IsIdentified && Rarity == ItemRarity.Rare && ItemLevel <= 74 && ItemLevel >= 60 && ClassName == "Amulet"
+
+!IsIdentified && Rarity == ItemRarity.Rare && ItemLevel <= 74 && ItemLevel >= 60 && ClassName == "Belt"
+
+!IsIdentified && Rarity == ItemRarity.Rare && ItemLevel <= 74 && ItemLevel >= 60 && ClassName == "Gloves"
+
+!IsIdentified && Rarity == ItemRarity.Rare && ItemLevel <= 74 && ItemLevel >= 60 && ClassName == "Boots"
+
+!IsIdentified && Rarity == ItemRarity.Rare && ItemLevel <= 74 && ItemLevel >= 60 && ClassName == "Helmet"
+
+!IsIdentified && Rarity == ItemRarity.Rare && ItemLevel <= 74 && ItemLevel >= 60 && ClassName == "Body Armour"
+
+!IsIdentified && Rarity == ItemRarity.Rare && ItemLevel <= 74 && ItemLevel >= 60 && IsWeapon
+
+//----------------------------------------------
+// Regal Recipe non influenced
+//----------------------------------------------
+
+//!IsInfluenced && !IsIdentified && Rarity == ItemRarity.Rare && ItemLevel >= 75 && ClassName == "Ring"
+
+//!IsInfluenced && !IsIdentified && Rarity == ItemRarity.Rare && ItemLevel >= 75 && ClassName == "Amulet"
+
+//!IsInfluenced && !IsIdentified && Rarity == ItemRarity.Rare && ItemLevel >= 75 && ClassName == "Belt"
+
+//!IsInfluenced && !IsIdentified && Rarity == ItemRarity.Rare && ItemLevel >= 75 && ClassName == "Gloves"
+
+//!IsInfluenced && !IsIdentified && Rarity == ItemRarity.Rare && ItemLevel >= 75 && ClassName == "Boots"
+
+//!IsInfluenced && !IsIdentified && Rarity == ItemRarity.Rare && ItemLevel >= 75 && ClassName == "Helmet"
+
+//!IsInfluenced && !IsIdentified && Rarity == ItemRarity.Rare && ItemLevel >= 75 && ClassName == "Body Armour"
+
+//!IsInfluenced && !IsIdentified && Rarity == ItemRarity.Rare && ItemLevel >= 75 && IsWeapon

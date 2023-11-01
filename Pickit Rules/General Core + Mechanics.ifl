@@ -1,0 +1,96 @@
+//----------------------------------------------
+// General Core + Mecahnic pickups
+//----------------------------------------------
+
+HasMods(new string[] { "MetamorphosisItemisedBossRewards" }) // Metamorph Organ
+
+BaseName == "Treasure Key" && 
+BaseName == "Golden Key" &&
+BaseName == "Silver Key" // Lab
+
+BaseName == "Stone of Passage" // Incursion
+
+ClassName == "HeistObjective" || 
+ClassName == "HeistContract" // Heist items
+
+ClassName == "ItemisedSanctum" // Sanctum items, need to check if this is all or not
+
+//----------------------------------------------
+// Veiled Section
+//----------------------------------------------
+
+VeiledModCount > 0
+
+//----------------------------------------------
+// Influenced Section / Fractured
+//----------------------------------------------
+
+//IsElder
+
+//IsShaper
+
+//IsHunter
+
+//IsWarlord
+
+//IsCrusader
+
+//IsRedeemer
+
+//IsInfluenced
+
+//IsFractured
+
+//----------------------------------------------
+// 6 Socket + 6 Links
+//----------------------------------------------
+
+SocketInfo.SocketNumber == 6
+
+SocketInfo.LargestLinkSize == 6
+
+//----------------------------------------------
+// Maps + Map Fragments
+//----------------------------------------------
+
+isMap && MapTier >= 1
+
+isMap && Rarity == ItemRarity.Unique
+
+ClassName == "MapFragment"
+
+BaseName.Contains("Maven's Invitation") // Invitations
+
+//----------------------------------------------
+// Quest Items
+//----------------------------------------------
+
+ClassName == "QuestItem"
+
+//----------------------------------------------
+// Flasks
+//----------------------------------------------
+
+ClassName.Contains("Flask") && ItemQuality >= 20 // quality flask over 20
+
+//ClassName.Contains("Flask") && ItemQuality == 0 // non quality flask
+
+//----------------------------------------------
+// Incubatores
+//----------------------------------------------
+
+BaseName == "Kalguuran Incubator"
+
+BaseName == "Diviner's Incubator"
+
+BaseName == "Geomancer's Incubator"
+
+BaseName == "Infused Incubator"
+
+BaseName == "Skittering Incubator"
+
+BaseName == "Foreboding Incubator"
+
+BaseName == "Blighted Incubator"
+
+//BaseName.EndsWith(" Incubator") // All Incubators
