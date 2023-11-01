@@ -1,3 +1,4 @@
+using System.Collections.Generic;
 using System.Numerics;
 using System.Windows.Forms;
 using ExileCore.Shared.Attributes;
@@ -19,18 +20,30 @@ public class PickItSettings : ISettings
     public ToggleNode LazyLooting { get; set; } = new ToggleNode(false);
     public ToggleNode NoLazyLootingWhileEnemyClose { get; set; } = new ToggleNode(false);
     public HotkeyNode LazyLootingPauseKey { get; set; } = new HotkeyNode(Keys.Space);
-
-    [JsonIgnore]
-    public ButtonNode ReloadFilters { get; set; } = new ButtonNode();
-
-    public ListNode FilterFile { get; set; } = new ListNode();
     public ToggleNode PickUpEverything { get; set; } = new ToggleNode(false);
     public ToggleNode ExpeditionChests { get; set; } = new ToggleNode(true);
 
     [Menu("Ignore \"Can pick up\" flag")]
     public ToggleNode IgnoreCanPickUp { get; set; } = new ToggleNode(false);
-    public Vector2 InventorySlotsVector2 { get; set; } = new Vector2(0, 0);
 
     [JsonIgnore]
     public TextNode FilterTest { get; set; } = new TextNode();
+
+    [JsonIgnore]
+    public ButtonNode ReloadFilters { get; set; } = new ButtonNode();
+
+    public List<PickitRule> PickitRules { get; set; } = new List<PickitRule>();
+}
+
+public class PickitRule
+{
+    public string Name { get; set; } = "";
+    public string Location { get; set; } = "";
+    public bool Enabled { get; set; } = false;
+    public PickitRule(string name, string location, bool enabled)
+    {
+        Name = name;
+        Location = location;
+        Enabled = enabled;
+    }
 }

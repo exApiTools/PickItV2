@@ -30,7 +30,7 @@ public partial class PickIt : BaseSettingsPlugin<PickItSettings>
     private readonly CachedValue<bool[,]> _inventorySlotsCache;
     private ServerInventory _inventoryItems;
     private SyncTask<bool> _pickUpTask;
-    private ItemFilter _itemFilter;
+    private List<ItemFilter> _itemFilters;
     private bool[,] InventorySlots => _inventorySlotsCache.Value;
     private readonly Stopwatch _sinceLastClick = Stopwatch.StartNew();
 
@@ -53,7 +53,6 @@ public partial class PickIt : BaseSettingsPlugin<PickItSettings>
 
         #endregion
 
-        Settings.FilterFile.OnValueSelected = _ => LoadRuleFiles();
         Settings.ReloadFilters.OnPressed = LoadRuleFiles;
         LoadRuleFiles();
         return true;
@@ -162,8 +161,7 @@ public partial class PickIt : BaseSettingsPlugin<PickItSettings>
 
     private bool DoWePickThis(PickItItemData item)
     {
-        return Settings.PickUpEverything ||
-               (_itemFilter?.Matches(item) ?? false);
+        return Settings.PickUpEverything || (_itemFilters?.Any(filter => filter.Matches(item)) ?? false);
     }
 
     private List<PickItItemData> UpdateCurrentLabels()
@@ -292,7 +290,7 @@ public partial class PickIt : BaseSettingsPlugin<PickItSettings>
 
     private void LoadRuleFiles()
     {
-        var pickitConfigFileDirectory = Path.Combine(ConfigDirectory);
+        var pickitConfigFileDirectory = ConfigDirectory;
 
         if (!Directory.Exists(pickitConfigFileDirectory))
         {
@@ -300,24 +298,79 @@ public partial class PickIt : BaseSettingsPlugin<PickItSettings>
             return;
         }
 
-        var dirInfo = new DirectoryInfo(pickitConfigFileDirectory);
-        Settings.FilterFile.Values = dirInfo.GetFiles("*.ifl").Select(x => Path.GetFileNameWithoutExtension(x.Name)).ToList();
-        if (Settings.FilterFile.Values.Any() && !Settings.FilterFile.Values.Contains(Settings.FilterFile.Value))
+        // TODO: change itemFilter to be a List<rules>() that get LoadFromPath
+        //       then change DoWePickThis() to check all rule sets and return if any of them is returning true.
+        // TODO: LoadRuleFiles() should only repopulate the list and then load the current state of enabled files.
+        //       DrawSettings should add a new list to the rule list when the button gets pressed
+        List<ItemFilter> tempFilters = new List<ItemFilter>();
+        var tempPickitRules = Settings.PickitRules;
+        var itemList = new List<FilterDirItem>();
+        PopulateFilterList(pickitConfigFileDirectory, tempPickitRules, itemList);
+
+        tempPickitRules = Settings.PickitRules;
+        if (Settings.PickitRules.Count > 0)
         {
-            Settings.FilterFile.Value = Settings.FilterFile.Values.First();
+            tempPickitRules.RemoveAll(rule => !itemList.Any(item => item.Name == rule.Name));
+
+            foreach (var item in tempPickitRules)
+            {
+                if (!item.Enabled)
+                    continue;
+
+                if (File.Exists(item.Location))
+                {
+                    tempFilters.Add(ItemFilter.LoadFromPath(item.Location));
+                }
+                else
+                {
+                    LogError($"File '{item.Name}' not found.");
+                }
+            }
+        }
+        _itemFilters = tempFilters;
+    }
+
+    private void PopulateFilterList(string pickitConfigFileDirectory, List<PickitRule> tempPickitRules, List<FilterDirItem> itemList)
+    {
+        foreach (var drItem in new DirectoryInfo(pickitConfigFileDirectory).GetFiles("*.ifl"))
+        {
+            itemList.Add(new FilterDirItem(drItem.Name, drItem.FullName));
         }
 
-        if (!string.IsNullOrWhiteSpace(Settings.FilterFile.Value))
+        if (itemList.Count > 0)
         {
-            var filterFilePath = Path.Combine(pickitConfigFileDirectory, $"{Settings.FilterFile.Value}.ifl");
-            if (File.Exists(filterFilePath))
+            tempPickitRules.RemoveAll(rule => !itemList.Any(item => item.Name == rule.Name));
+
+            foreach (var item in itemList)
             {
-                _itemFilter = ItemFilter.LoadFromPath(filterFilePath);
+                if (!tempPickitRules.Any(rule => rule.Name == item.Name))
+                {
+                    tempPickitRules.Add(new PickitRule(item.Name, item.Path, false));
+                }
             }
-            else
+        }
+        Settings.PickitRules = tempPickitRules;
+    }
+
+    public record FilterDirItem(string Name, string Path);
+
+    public override void DrawSettings()
+    {
+        base.DrawSettings();
+
+        if (ImGui.Button("Open Build Folder"))
+            Process.Start("explorer.exe", ConfigDirectory);
+
+        ImGui.Separator();
+
+        ImGui.BulletText("Select Rules To Load");
+
+        foreach (var rule in Settings.PickitRules)
+        {
+            var refToggle = rule.Enabled;
+            if (ImGui.Checkbox(rule.Name, ref refToggle))
             {
-                _itemFilter = null;
-                LogError("Item filter file not found, plugin will not work");
+                rule.Enabled = refToggle;
             }
         }
     }
