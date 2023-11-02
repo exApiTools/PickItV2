@@ -298,46 +298,40 @@ public partial class PickIt : BaseSettingsPlugin<PickItSettings>
             return;
         }
 
-        List<ItemFilter> tempFilters = new List<ItemFilter>();
-        var itemList = new List<FilterDirItem>();
-        var tempPickitRules = new List<PickitRule>(Settings.PickitRules); // Create a copy
+        var tempPickitRules = new List<PickitRule>(Settings.PickitRules);
         var toRemove = new List<PickitRule>();
 
-        foreach (var drItem in new DirectoryInfo(pickitConfigFileDirectory).GetFiles("*.ifl"))
-        {
-            var existingRule = tempPickitRules.FirstOrDefault(rule => rule.Location == drItem.FullName);
-            if (existingRule != null)
+        var itemList = new DirectoryInfo(pickitConfigFileDirectory)
+            .GetFiles("*.ifl")
+            .Select(drItem =>
             {
-                tempPickitRules.Add(existingRule);
-            }
-            else
-            {
-                Settings.PickitRules.Add(new PickitRule(drItem.Name, drItem.FullName, false));
-            }
-            itemList.Add(new FilterDirItem(drItem.Name, drItem.FullName));
-        }
+                var existingRule = tempPickitRules.FirstOrDefault(rule => rule.Location == drItem.FullName);
+                if (existingRule != null)
+                    tempPickitRules.Add(existingRule);
+                else
+                    Settings.PickitRules.Add(new PickitRule(drItem.Name, drItem.FullName, false));
+                return new FilterDirItem(drItem.Name, drItem.FullName);
+            })
+            .ToList();
 
-        foreach (var rule in tempPickitRules)
+        try
         {
-            if (!File.Exists(rule.Location))
-            {
-                toRemove.Add(rule);
-                LogError($"File '{rule.Name}' not found.");
-                continue;
-            }
+            tempPickitRules
+                .Where(rule => !File.Exists(rule.Location))
+                .ToList()
+                .ForEach(rule => { toRemove.Add(rule); LogError($"File '{rule.Name}' not found."); });
 
-            if (!rule.Enabled)
-                continue;
+            _itemFilters = tempPickitRules
+                .Where(rule => rule.Enabled && File.Exists(rule.Location))
+                .Select(rule => ItemFilter.LoadFromPath(rule.Location))
+                .ToList();
 
-            tempFilters.Add(ItemFilter.LoadFromPath(rule.Location));
+            toRemove.ForEach(rule => Settings.PickitRules.Remove(rule));
         }
-
-        foreach (var rule in toRemove)
+        catch (Exception e)
         {
-            Settings.PickitRules.Remove(rule);
+            LogError($"An error occurred while loading rule files: {e.Message}");
         }
-
-        _itemFilters = tempFilters;
     }
 
     public record FilterDirItem(string Name, string Path);
@@ -350,7 +344,6 @@ public partial class PickIt : BaseSettingsPlugin<PickItSettings>
             Process.Start("explorer.exe", ConfigDirectory);
 
         ImGui.Separator();
-
         ImGui.BulletText("Select Rules To Load");
         ImGui.BulletText("Ordering rule sets so general items will match first rather than last will improve performance");
 
@@ -358,33 +351,22 @@ public partial class PickIt : BaseSettingsPlugin<PickItSettings>
 
         for (int i = 0; i < tempNPCInvRules.Count; i++)
         {
-            if (ImGui.ArrowButton($"##upButton{i}", ImGuiDir.Up) && i > 0) // Check if i is greater than 0
-            {
-                var temp = tempNPCInvRules[i];
-                tempNPCInvRules[i] = tempNPCInvRules[i - 1];
-                tempNPCInvRules[i - 1] = temp;
-            }
-            ImGui.SameLine();
-            ImGui.Text(" ");
-            ImGui.SameLine();
-            if (ImGui.ArrowButton($"##downButton{i}", ImGuiDir.Down) && i < tempNPCInvRules.Count - 1) // Check if i is less than tempNPCInvRules.Count - 1
-            {
-                var temp = tempNPCInvRules[i];
-                tempNPCInvRules[i] = tempNPCInvRules[i + 1];
-                tempNPCInvRules[i + 1] = temp;
-            }
-            ImGui.SameLine();
-            ImGui.Text(" - ");
-            ImGui.SameLine();
+            if (ImGui.ArrowButton($"##upButton{i}", ImGuiDir.Up) && i > 0)
+                (tempNPCInvRules[i - 1], tempNPCInvRules[i]) = (tempNPCInvRules[i], tempNPCInvRules[i - 1]);
+
+            ImGui.SameLine(); ImGui.Text(" "); ImGui.SameLine();
+
+            if (ImGui.ArrowButton($"##downButton{i}", ImGuiDir.Down) && i < tempNPCInvRules.Count - 1)
+                (tempNPCInvRules[i + 1], tempNPCInvRules[i]) = (tempNPCInvRules[i], tempNPCInvRules[i + 1]);
+
+            ImGui.SameLine(); ImGui.Text(" - "); ImGui.SameLine();
+
             var refToggle = tempNPCInvRules[i].Enabled;
             if (ImGui.Checkbox($"{tempNPCInvRules[i].Name}##checkbox{i}", ref refToggle))
-            {
                 tempNPCInvRules[i].Enabled = refToggle;
-            }
         }
 
-        Settings.PickitRules = tempNPCInvRules; // Set the modified list to the original one
-
+        Settings.PickitRules = tempNPCInvRules;
     }
 
     private async SyncTask<bool> RunPickerIterationAsync()
