@@ -339,8 +339,6 @@ public partial class PickIt : BaseSettingsPlugin<PickItSettings>
         }
     }
 
-    public record FilterDirItem(string Name, string Path);
-
     public override void DrawSettings()
     {
         base.DrawSettings();
