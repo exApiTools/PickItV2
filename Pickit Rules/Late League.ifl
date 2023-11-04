@@ -1,0 +1,54 @@
+BaseName == "Offering to the Goddess" || 
+BaseName == "Dedication to the Goddess" || 
+BaseName == "Gift to the Goddess" || 
+BaseName == "Tribute to the Goddess"
+
+^BaseName == "Portal Scroll" ||
+ BaseName == "Scroll of Wisdom"
+
+ClassName.EndsWith("Currency")
+
+BaseName.EndsWith(" Incubator")
+
+BaseName.Contains("Maven's")
+
+IsMap && MapTier >= 14
+
+IsBlightMap && MapTier >= 13
+
+ClassName.Contains("Skill Gem") && (ItemQuality >= 10 || GemInfo.Level >= 18)
+
+GemInfo.QualityType == SkillGemQualityTypeE.Anomalous || 
+GemInfo.QualityType == SkillGemQualityTypeE.Phantasmal || 
+GemInfo.QualityType == SkillGemQualityTypeE.Divergent
+
+BaseName.StartsWith("Empower") ||
+BaseName.StartsWith("Enhance") || 
+BaseName.StartsWith("Enlighten") ||
+BaseName.StartsWith("Item Quantity") ||
+BaseName.StartsWith("Portal") ||
+BaseName.StartsWith("Vaal Breach")
+
+BaseName == "Treasure Key" || 
+BaseName == "Golden Key" ||
+BaseName == "Silver Key" ||
+BaseName == "Stone of Passage"
+
+ClassName == "HeistObjective" ||
+ClassName == "HeistContract" ||
+ClassName == "HeistBlueprint" ||
+ClassName == "ItemisedSanctum" ||
+ClassName == "QuestItem" ||
+ClassName == "MiscMapItem" ||
+ClassName == "MapFragment" ||
+ClassName == "ExpeditionLogbook" ||
+ClassName == "DivinationCard"
+
+BaseName.EndsWith("Reliquary Key") ||
+BaseName.Contains("Inscribed Ultimatum") ||
+BaseName.Contains("Chronicle of Atzoatl") ||
+BaseName.Contains("Watchstone") ||
+BaseName.Contains("Memory") ||
+BaseName.Contains("Synthesised Map")
+
+ItemLevel >= 86 && IsInfluenced && Rarity != ItemRarity.Unique
