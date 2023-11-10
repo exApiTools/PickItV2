@@ -7,9 +7,8 @@ namespace PickIt;
 
 public class PickItItemData : ItemData
 {
-    public PickItItemData(LabelOnGround queriedItem, FilesContainer fs, AreaController area) : base(queriedItem, fs)
+    public PickItItemData(LabelOnGround queriedItem, GameController gc) : base(queriedItem, gc)
     {
-        AreaInfo = new AreaData(area.CurrentArea.RealLevel, area.CurrentArea.Name, area.CurrentArea.Act, area.CurrentArea.Act > 10);
     }
 
     public int AttemptedPickups { get; set; }
