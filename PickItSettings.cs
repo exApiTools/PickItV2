@@ -32,6 +32,9 @@ public class PickItSettings : ISettings
     [JsonIgnore]
     public ButtonNode ReloadFilters { get; set; } = new ButtonNode();
 
+    [Menu("Use a Custom \"\\config\\custom_folder\" folder ")]
+    public TextNode CustomConfigDir { get; set; } = new TextNode();
+
     public List<PickitRule> PickitRules { get; set; } = new List<PickitRule>();
 }
 

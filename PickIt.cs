@@ -1,24 +1,24 @@
-using System.Collections.Generic;
-using System.Linq;
-using System.Windows.Forms;
 using ExileCore;
 using ExileCore.PoEMemory.Components;
 using ExileCore.PoEMemory.Elements;
 using ExileCore.PoEMemory.MemoryObjects;
 using ExileCore.Shared;
 using ExileCore.Shared.Cache;
+using ExileCore.Shared.Enums;
 using ExileCore.Shared.Helpers;
 using ImGuiNET;
+using ItemFilterLibrary;
 using System;
+using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
+using System.Linq;
 using System.Numerics;
 using System.Text.RegularExpressions;
 using System.Threading;
 using System.Threading.Tasks;
-using ExileCore.Shared.Enums;
+using System.Windows.Forms;
 using SDxVector2 = SharpDX.Vector2;
-using ItemFilterLibrary;
 
 namespace PickIt;
 
@@ -291,44 +291,52 @@ public partial class PickIt : BaseSettingsPlugin<PickItSettings>
     private void LoadRuleFiles()
     {
         var pickitConfigFileDirectory = ConfigDirectory;
+        var existingRules = Settings.PickitRules;
 
-        if (!Directory.Exists(pickitConfigFileDirectory))
+        if (!string.IsNullOrEmpty(Settings.CustomConfigDir))
         {
-            Directory.CreateDirectory(pickitConfigFileDirectory);
-            return;
-        }
+            var customConfigFileDirectory = Path.Combine(Path.GetDirectoryName(ConfigDirectory), Settings.CustomConfigDir);
+            DebugWindow.LogMsg(customConfigFileDirectory, 15);
 
-        var tempPickitRules = new List<PickitRule>(Settings.PickitRules);
-        var toRemove = new List<PickitRule>();
-
-        var itemList = new DirectoryInfo(pickitConfigFileDirectory)
-            .GetFiles("*.ifl")
-            .Select(drItem =>
+            if (Directory.Exists(customConfigFileDirectory))
             {
-                var existingRule = tempPickitRules.FirstOrDefault(rule => rule.Location == drItem.FullName);
-                if (existingRule == null)
-                    Settings.PickitRules.Add(new PickitRule(drItem.Name, drItem.FullName, false));
-                return new FilterDirItem(drItem.Name, drItem.FullName);
-            })
-            .ToList();
+                pickitConfigFileDirectory = customConfigFileDirectory;
+            }
+            else
+            {
+                DebugWindow.LogError("[Pickit] custom config folder does not exist.", 15);
+            }
+        }
 
         try
         {
-            tempPickitRules
-                .Where(rule => !File.Exists(rule.Location))
-                .ToList()
-                .ForEach(rule => { toRemove.Add(rule); LogError($"File '{rule.Name}' not found."); });
+            var newRules = new DirectoryInfo(pickitConfigFileDirectory).GetFiles("*.ifl")
+                .Select(x => new PickitRule(x.Name, Path.GetRelativePath(pickitConfigFileDirectory, x.FullName), false))
+                .ExceptBy(existingRules.Select(x => x.Location), x => x.Location)
+                .ToList();
+            foreach (var groundRule in existingRules)
+            {
+                var fullPath = Path.Combine(pickitConfigFileDirectory, groundRule.Location);
+                if (File.Exists(fullPath))
+                {
+                    newRules.Add(groundRule);
+                }
+                else
+                {
+                    LogError($"File '{groundRule.Name}' not found.");
+                }
+            }
 
-            _itemFilters = tempPickitRules
-                .Where(rule => rule.Enabled && File.Exists(rule.Location))
-                .Select(rule => ItemFilter.LoadFromPath(rule.Location))
+            _itemFilters = newRules
+                .Where(rule => rule.Enabled)
+                .Select(rule => ItemFilter.LoadFromPath(Path.Combine(pickitConfigFileDirectory, rule.Location)))
                 .ToList();
 
-            toRemove.ForEach(rule => Settings.PickitRules.Remove(rule));
+            Settings.PickitRules = newRules;
         }
         catch (Exception e)
         {
-            LogError($"An error occurred while loading rule files: {e.Message}");
+
         }
     }
 
@@ -339,7 +347,18 @@ public partial class PickIt : BaseSettingsPlugin<PickItSettings>
         base.DrawSettings();
 
         if (ImGui.Button("Open Build Folder"))
-            Process.Start("explorer.exe", ConfigDirectory);
+        {
+            var configDir = ConfigDirectory;
+            var customConfigFileDirectory = !string.IsNullOrEmpty(Settings.CustomConfigDir)
+                ? Path.Combine(Path.GetDirectoryName(ConfigDirectory), Settings.CustomConfigDir)
+                : null;
+
+            var directoryToOpen = Directory.Exists(customConfigFileDirectory)
+                ? customConfigFileDirectory
+                : configDir;
+
+            Process.Start("explorer.exe", directoryToOpen);
+        }
 
         ImGui.Separator();
         ImGui.BulletText("Select Rules To Load");
