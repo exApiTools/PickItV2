@@ -173,7 +173,7 @@ public partial class PickIt : BaseSettingsPlugin<PickItSettings>
                                   && window.Contains(x.Label.GetClientRectCache.Center)
                                   && (Settings.IgnoreCanPickUp || x.CanPickUp)
                                   && x.MaxTimeForPickUp.TotalSeconds <= 0)
-            .Select(x => new PickItItemData(x, GameController.Files))
+            .Select(x => new PickItItemData(x, GameController.Files, GameController.Area))
             .ToList();
     }
 
