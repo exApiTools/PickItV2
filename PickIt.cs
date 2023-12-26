@@ -182,7 +182,7 @@ public partial class PickIt : BaseSettingsPlugin<PickItSettings>
                                   && (Settings.IgnoreCanPickUp || x.CanPickUp)
                                   && x.MaxTimeForPickUp.TotalSeconds <= 0)
             .Select(x => new PickItItemData(x, GameController))
-            .ToList() ?? new List<PickItItemData>();
+            .ToList() ?? [];
     }
 
     private List<LabelOnGround> UpdateChestList() =>
@@ -431,7 +431,7 @@ public partial class PickIt : BaseSettingsPlugin<PickItSettings>
 
     private IEnumerable<PickItItemData> GetItemsToPickup(bool filterAttempts)
     {
-        return _itemLabels.Value
+        return UpdateCurrentLabels()
             .Where(x => x.Entity != null
                         && (!filterAttempts || x.AttemptedPickups == 0)
                         && x.Distance < Settings.PickupRange
@@ -447,7 +447,6 @@ public partial class PickIt : BaseSettingsPlugin<PickItSettings>
         {
             if (!IsLabelClickable(label))
             {
-                _itemLabels.ForceUpdate();
                 _chestLabels.ForceUpdate();
                 return true;
             }
@@ -468,19 +467,11 @@ public partial class PickIt : BaseSettingsPlugin<PickItSettings>
                 }
                 else
                 {
-                    // in case of portal nearby do extra checks with delays
-                    if (IsPortalNearby(_portalLabel.Value, label))
+                    if (await CheckPortal(label)) return true;
+                    if (!IsTargeted(label))
                     {
-                        if (IsPortalTargeted(_portalLabel.Value))
-                        {
-                            return true;
-                        }
-
-                        await Task.Delay(25);
-                        if (IsPortalTargeted(_portalLabel.Value))
-                        {
-                            return true;
-                        }
+                        await TaskUtils.NextFrame();
+                        continue;
                     }
 
                     Input.Click(MouseButtons.Left);
@@ -493,6 +484,19 @@ public partial class PickIt : BaseSettingsPlugin<PickItSettings>
         }
 
         return true;
+    }
+
+    private async Task<bool> CheckPortal(LabelOnGround label)
+    {
+        if (!IsPortalNearby(_portalLabel.Value, label)) return false;
+        // in case of portal nearby do extra checks with delays
+        if (IsPortalTargeted(_portalLabel.Value))
+        {
+            return true;
+        }
+
+        await Task.Delay(25);
+        return IsPortalTargeted(_portalLabel.Value);
     }
 
     private static bool IsTargeted(LabelOnGround label)
