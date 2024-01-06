@@ -13,19 +13,21 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
 using System.Linq;
-using System.Numerics;
 using System.Text.RegularExpressions;
 using System.Threading;
 using System.Threading.Tasks;
 using System.Windows.Forms;
+using ExileCore.PoEMemory;
+using SharpDX;
 using SDxVector2 = SharpDX.Vector2;
+using Vector2 = System.Numerics.Vector2;
+using Vector3 = System.Numerics.Vector3;
 
 namespace PickIt;
 
 public partial class PickIt : BaseSettingsPlugin<PickItSettings>
 {
     private readonly TimeCache<List<LabelOnGround>> _chestLabels;
-    private readonly TimeCache<List<PickItItemData>> _itemLabels;
     private readonly CachedValue<LabelOnGround> _portalLabel;
     private readonly CachedValue<bool[,]> _inventorySlotsCache;
     private ServerInventory _inventoryItems;
@@ -39,7 +41,6 @@ public partial class PickIt : BaseSettingsPlugin<PickItSettings>
     {
         Name = "PickIt With Linq";
         _inventorySlotsCache = new FrameCache<bool[,]>(() => GetContainer2DArray(_inventoryItems));
-        _itemLabels = new TimeCache<List<PickItItemData>>(UpdateCurrentLabels, 500);
         _chestLabels = new TimeCache<List<LabelOnGround>>(UpdateChestList, 200);
         _portalLabel = new TimeCache<LabelOnGround>(() => GetLabel(@"^Metadata/(MiscellaneousObjects|Effects/Microtransactions)/.*Portal"), 200);
     }
@@ -56,12 +57,9 @@ public partial class PickIt : BaseSettingsPlugin<PickItSettings>
 
         Settings.ReloadFilters.OnPressed = LoadRuleFiles;
         LoadRuleFiles();
-        GameController.PluginBridge.SaveMethod("PickIt.ListItems", () => GetItemsToPickup(false).Select(x => x.LabelOnGround).ToList());
+        GameController.PluginBridge.SaveMethod("PickIt.ListItems", () => GetItemsToPickup(false).Select(x => x.QueriedItem).ToList());
         GameController.PluginBridge.SaveMethod("PickIt.IsActive", () => _pickUpTask?.GetAwaiter().IsCompleted == false);
-        GameController.PluginBridge.SaveMethod("PickIt.SetWorkMode", (bool running) =>
-        {
-            _pluginBridgeModeOverride = running;
-        });
+        GameController.PluginBridge.SaveMethod("PickIt.SetWorkMode", (bool running) => { _pluginBridgeModeOverride = running; });
         return true;
     }
 
@@ -153,15 +151,15 @@ public partial class PickIt : BaseSettingsPlugin<PickItSettings>
         {
             var numb = 0;
             for (var i = 0; i < 5; i++)
-                for (var j = 0; j < 12; j++)
-                {
-                    var toggled = Convert.ToBoolean(InventorySlots[i, j]);
-                    if (ImGui.Checkbox($"##{numb}IgnoredCells", ref toggled)) InventorySlots[i, j] = toggled;
+            for (var j = 0; j < 12; j++)
+            {
+                var toggled = Convert.ToBoolean(InventorySlots[i, j]);
+                if (ImGui.Checkbox($"##{numb}IgnoredCells", ref toggled)) InventorySlots[i, j] = toggled;
 
-                    if (j != 11) ImGui.SameLine();
+                if (j != 11) ImGui.SameLine();
 
-                    numb += 1;
-                }
+                numb += 1;
+            }
 
             ImGui.End();
         }
@@ -172,30 +170,16 @@ public partial class PickIt : BaseSettingsPlugin<PickItSettings>
         return Settings.PickUpEverything || (_itemFilters?.Any(filter => filter.Matches(item)) ?? false);
     }
 
-    private List<PickItItemData> UpdateCurrentLabels()
-    {
-        var window = GameController.Window.GetWindowRectangleTimeCache with { Location = SDxVector2.Zero };
-        var labels = GameController.Game.IngameState.IngameUi.ItemsOnGroundLabelsVisible;
-
-        return labels?.Where(x => x.Address != 0 && x.ItemOnGround?.Path != null && x.IsVisible
-                                  && window.Contains(x.Label.GetClientRectCache.Center)
-                                  && (Settings.IgnoreCanPickUp || x.CanPickUp)
-                                  && x.MaxTimeForPickUp.TotalSeconds <= 0)
-            .Select(x => new PickItItemData(x, GameController))
-            .ToList() ?? [];
-    }
-
     private List<LabelOnGround> UpdateChestList() =>
         GameController?.Game?.IngameState?.IngameUi?.ItemsOnGroundLabelsVisible
             .Where(x => x.Address != 0 &&
                         x.IsVisible &&
-                        (Settings.IgnoreCanPickUp || x.CanPickUp) &&
-                        x.ItemOnGround.Path is { } path &&
-                        (path.StartsWith("Metadata/Chests/LeaguesExpedition/") ||
-                         path.StartsWith("Metadata/Chests/LegionChests/") ||
-                         path.StartsWith("Metadata/Chests/Blight") ||
-                         path.StartsWith("Metadata/Chests/Breach/") ||
-                         path.StartsWith("Metadata/Chests/IncursionChest")) &&
+                        x.ItemOnGround?.Path is { } path &&
+                        (path.StartsWith("Metadata/Chests/LeaguesExpedition/", StringComparison.Ordinal) ||
+                         path.StartsWith("Metadata/Chests/LegionChests/", StringComparison.Ordinal) ||
+                         path.StartsWith("Metadata/Chests/Blight", StringComparison.Ordinal) ||
+                         path.StartsWith("Metadata/Chests/Breach/", StringComparison.Ordinal) ||
+                         path.StartsWith("Metadata/Chests/IncursionChest", StringComparison.Ordinal)) &&
                         x.ItemOnGround.HasComponent<Chest>())
             .OrderBy(x => x.ItemOnGround.DistancePlayer)
             .ToList();
@@ -218,31 +202,31 @@ public partial class PickIt : BaseSettingsPlugin<PickItSettings>
         return true;
     }
 
-    private bool ShouldLazyLoot(ItemData item)
+    private bool ShouldLazyLoot(PickItItemData item)
     {
         if (item == null)
         {
             return false;
         }
 
-        var itemPos = item.LabelOnGround.ItemOnGround.PosNum;
+        var itemPos = item.QueriedItem.Entity.PosNum;
         var playerPos = GameController.Player.PosNum;
         return Math.Abs(itemPos.Z - playerPos.Z) <= 50 &&
                itemPos.Xy().DistanceSquared(playerPos.Xy()) <= 275 * 275;
     }
 
-    private bool IsLabelClickable(LabelOnGround label)
+    private bool IsLabelClickable(Element element, RectangleF? customRect)
     {
-        if (label?.Label is not { IsValid: true, IsVisible: true, IndexInParent: not null } validLabel)
+        if (element is not { IsValid: true, IsVisible: true, IndexInParent: not null })
         {
             return false;
         }
 
-        var vector3 = validLabel.GetClientRect().Center;
+        var center = (customRect ?? element.GetClientRect()).Center;
 
         var gameWindowRect = GameController.Window.GetWindowRectangleTimeCache with { Location = SDxVector2.Zero };
         gameWindowRect.Inflate(-36, -36);
-        return gameWindowRect.Contains(vector3.X, vector3.Y);
+        return gameWindowRect.Contains(center.X, center.Y);
     }
 
     private bool IsPortalTargeted(LabelOnGround portalLabel)
@@ -268,11 +252,11 @@ public partial class PickIt : BaseSettingsPlugin<PickItSettings>
             portalLabel.ItemOnGround?.GetComponent<Targetable>()?.isTargeted == true;
     }
 
-    private static bool IsPortalNearby(LabelOnGround portalLabel, LabelOnGround pickItItem)
+    private static bool IsPortalNearby(LabelOnGround portalLabel, Element element)
     {
-        if (portalLabel == null || pickItItem == null) return false;
+        if (portalLabel == null) return false;
         var rect1 = portalLabel.Label.GetClientRectCache;
-        var rect2 = pickItItem.Label.GetClientRectCache;
+        var rect2 = element.GetClientRectCache;
         rect1.Inflate(100, 100);
         rect2.Inflate(100, 100);
         return rect1.Intersects(rect2);
@@ -346,9 +330,9 @@ public partial class PickIt : BaseSettingsPlugin<PickItSettings>
 
             Settings.PickitRules = newRules;
         }
-        catch (Exception e)
+        catch (Exception ex)
         {
-
+            LogError($"[Pickit] Error loading filters: {ex}.", 15);
         }
     }
 
@@ -374,26 +358,30 @@ public partial class PickIt : BaseSettingsPlugin<PickItSettings>
         ImGui.BulletText("Select Rules To Load");
         ImGui.BulletText("Ordering rule sets so general items will match first rather than last will improve performance");
 
-        var tempNPCInvRules = new List<PickitRule>(Settings.PickitRules); // Create a copy
+        var tempNpcInvRules = new List<PickitRule>(Settings.PickitRules); // Create a copy
 
-        for (int i = 0; i < tempNPCInvRules.Count; i++)
+        for (int i = 0; i < tempNpcInvRules.Count; i++)
         {
-            if (ImGui.ArrowButton($"##upButton{i}", ImGuiDir.Up) && i > 0)
-                (tempNPCInvRules[i - 1], tempNPCInvRules[i]) = (tempNPCInvRules[i], tempNPCInvRules[i - 1]);
+            ImGui.PushID(i);
+            if (ImGui.ArrowButton("##upButton", ImGuiDir.Up) && i > 0)
+                (tempNpcInvRules[i - 1], tempNpcInvRules[i]) = (tempNpcInvRules[i], tempNpcInvRules[i - 1]);
 
-            ImGui.SameLine(); ImGui.Text(" "); ImGui.SameLine();
+            ImGui.SameLine();
+            ImGui.Text(" ");
+            ImGui.SameLine();
 
-            if (ImGui.ArrowButton($"##downButton{i}", ImGuiDir.Down) && i < tempNPCInvRules.Count - 1)
-                (tempNPCInvRules[i + 1], tempNPCInvRules[i]) = (tempNPCInvRules[i], tempNPCInvRules[i + 1]);
+            if (ImGui.ArrowButton("##downButton", ImGuiDir.Down) && i < tempNpcInvRules.Count - 1)
+                (tempNpcInvRules[i + 1], tempNpcInvRules[i]) = (tempNpcInvRules[i], tempNpcInvRules[i + 1]);
 
-            ImGui.SameLine(); ImGui.Text(" - "); ImGui.SameLine();
+            ImGui.SameLine();
+            ImGui.Text(" - ");
+            ImGui.SameLine();
 
-            var refToggle = tempNPCInvRules[i].Enabled;
-            if (ImGui.Checkbox($"{tempNPCInvRules[i].Name}##checkbox{i}", ref refToggle))
-                tempNPCInvRules[i].Enabled = refToggle;
+            ImGui.Checkbox($"{tempNpcInvRules[i].Name}###enabled", ref tempNpcInvRules[i].Enabled);
+            ImGui.PopID();
         }
 
-        Settings.PickitRules = tempNPCInvRules;
+        Settings.PickitRules = tempNpcInvRules;
     }
 
     private async SyncTask<bool> RunPickerIterationAsync()
@@ -404,15 +392,15 @@ public partial class PickIt : BaseSettingsPlugin<PickItSettings>
         var workMode = GetWorkMode();
         if (workMode == WorkMode.Manual || workMode == WorkMode.Lazy && ShouldLazyLoot(pickUpThisItem))
         {
-            if (Settings.ExpeditionChests.Value)
+            if (Settings.ClickChests)
             {
                 var chestLabel = _chestLabels?.Value.FirstOrDefault(x =>
-                    x.ItemOnGround.DistancePlayer < Settings.PickupRange && x.ItemOnGround != null &&
-                    IsLabelClickable(x));
+                    x.ItemOnGround.DistancePlayer < Settings.PickupRange &&
+                    IsLabelClickable(x.Label, null));
 
                 if (chestLabel != null && (pickUpThisItem == null || pickUpThisItem.Distance >= chestLabel.ItemOnGround.DistancePlayer))
                 {
-                    await PickAsync(chestLabel);
+                    await PickAsync(chestLabel.ItemOnGround, chestLabel.Label, null, true);
                     return true;
                 }
             }
@@ -423,31 +411,40 @@ public partial class PickIt : BaseSettingsPlugin<PickItSettings>
             }
 
             pickUpThisItem.AttemptedPickups++;
-            await PickAsync(pickUpThisItem.LabelOnGround);
+            await PickAsync(pickUpThisItem.QueriedItem.Entity, pickUpThisItem.QueriedItem.Label, pickUpThisItem.QueriedItem.ClientRect, false);
         }
 
         return true;
     }
 
-    private IEnumerable<PickItItemData> GetItemsToPickup(bool filterAttempts)
+    private List<PickItItemData> GetItemsToPickup(bool filterAttempts)
     {
-        return UpdateCurrentLabels()
+        var window = GameController.Window.GetWindowRectangleTimeCache with { Location = SDxVector2.Zero };
+        var labels = GameController.Game.IngameState.IngameUi.ItemsOnGroundLabelElement.VisibleGroundItemLabels;
+        return labels?
+            .Where(x => x.Entity?.Path != null && x.Label.IsVisible && window.Contains(x.ClientRect.Center))
+            .Select(x => new PickItItemData(x, GameController))
             .Where(x => x.Entity != null
                         && (!filterAttempts || x.AttemptedPickups == 0)
                         && x.Distance < Settings.PickupRange
-                        && IsLabelClickable(x.LabelOnGround)
+                        && IsLabelClickable(x.QueriedItem.Label, x.QueriedItem.ClientRect)
                         && DoWePickThis(x)
-                        && (Settings.PickUpWhenInventoryIsFull || CanFitInventory(x)));
+                        && (Settings.PickUpWhenInventoryIsFull || CanFitInventory(x)))
+            .ToList() ?? [];
     }
 
-    private async SyncTask<bool> PickAsync(LabelOnGround label)
+    private async SyncTask<bool> PickAsync(Entity item, Element label, RectangleF? customRect, bool isChest)
     {
         var tryCount = 0;
         while (tryCount < 3)
         {
-            if (!IsLabelClickable(label))
+            if (!IsLabelClickable(label, customRect))
             {
-                _chestLabels.ForceUpdate();
+                if (isChest)
+                {
+                    _chestLabels.ForceUpdate();
+                }
+
                 return true;
             }
 
@@ -457,18 +454,17 @@ public partial class PickIt : BaseSettingsPlugin<PickItSettings>
                 continue;
             }
 
-            var completeItemLabel = label.Label;
-            var vector2 = completeItemLabel.GetClientRect().ClickRandomNum(5, 3) + GameController.Window.GetWindowRectangleTimeCache.TopLeft.ToVector2Num();
+            var position = label.GetClientRect().ClickRandomNum(5, 3) + GameController.Window.GetWindowRectangleTimeCache.TopLeft.ToVector2Num();
             if (_sinceLastClick.ElapsedMilliseconds > Settings.PauseBetweenClicks)
             {
-                if (!IsTargeted(label))
+                if (!IsTargeted(item))
                 {
-                    await SetCursorPositionAsync(vector2, label);
+                    await SetCursorPositionAsync(position, item);
                 }
                 else
                 {
                     if (await CheckPortal(label)) return true;
-                    if (!IsTargeted(label))
+                    if (!IsTargeted(item))
                     {
                         await TaskUtils.NextFrame();
                         continue;
@@ -486,7 +482,7 @@ public partial class PickIt : BaseSettingsPlugin<PickItSettings>
         return true;
     }
 
-    private async Task<bool> CheckPortal(LabelOnGround label)
+    private async Task<bool> CheckPortal(Element label)
     {
         if (!IsPortalNearby(_portalLabel.Value, label)) return false;
         // in case of portal nearby do extra checks with delays
@@ -499,15 +495,15 @@ public partial class PickIt : BaseSettingsPlugin<PickItSettings>
         return IsPortalTargeted(_portalLabel.Value);
     }
 
-    private static bool IsTargeted(LabelOnGround label)
+    private static bool IsTargeted(Entity item)
     {
-        return label?.ItemOnGround?.GetComponent<Targetable>()?.isTargeted == true;
+        return item?.GetComponent<Targetable>()?.isTargeted == true;
     }
 
-    private static async SyncTask<bool> SetCursorPositionAsync(Vector2 vector2, LabelOnGround item)
+    private static async SyncTask<bool> SetCursorPositionAsync(Vector2 position, Entity item)
     {
-        DebugWindow.LogMsg($"Set cursor pos: {vector2}");
-        Input.SetCursorPos(vector2);
+        DebugWindow.LogMsg($"Set cursor pos: {position}");
+        Input.SetCursorPos(position);
         return await TaskUtils.CheckEveryFrame(() => IsTargeted(item), new CancellationTokenSource(60).Token);
     }
 

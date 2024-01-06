@@ -1,5 +1,4 @@
 using System.Collections.Generic;
-using System.Numerics;
 using System.Windows.Forms;
 using ExileCore.Shared.Attributes;
 using ExileCore.Shared.Interfaces;
@@ -21,10 +20,7 @@ public class PickItSettings : ISettings
     public ToggleNode NoLazyLootingWhileEnemyClose { get; set; } = new ToggleNode(false);
     public HotkeyNode LazyLootingPauseKey { get; set; } = new HotkeyNode(Keys.Space);
     public ToggleNode PickUpEverything { get; set; } = new ToggleNode(false);
-    public ToggleNode ExpeditionChests { get; set; } = new ToggleNode(true);
-
-    [Menu("Ignore \"Can pick up\" flag")]
-    public ToggleNode IgnoreCanPickUp { get; set; } = new ToggleNode(false);
+    public ToggleNode ClickChests { get; set; } = new ToggleNode(true);
 
     [JsonIgnore]
     public TextNode FilterTest { get; set; } = new TextNode();
@@ -38,15 +34,7 @@ public class PickItSettings : ISettings
     public List<PickitRule> PickitRules { get; set; } = new List<PickitRule>();
 }
 
-public class PickitRule
+public record PickitRule(string Name, string Location, bool Enabled)
 {
-    public string Name { get; set; } = "";
-    public string Location { get; set; } = "";
-    public bool Enabled { get; set; } = false;
-    public PickitRule(string name, string location, bool enabled)
-    {
-        Name = name;
-        Location = location;
-        Enabled = enabled;
-    }
+    public bool Enabled = Enabled;
 }
